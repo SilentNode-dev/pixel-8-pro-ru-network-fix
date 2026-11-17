@@ -1,0 +1,30 @@
+{
+  "slots": {
+    "0": {
+      "volte": true,
+      "wfc": true,
+      "vt": true,
+      "fiveGnr": true,
+      "vonr": true,
+      "show4gForLte": true,
+      "editableWfcMode": true,
+      "wfcWifiOnly": true,
+      "showWifiCallingIcon": true,
+      "crossSimIms": true,
+      "ssOverUt": true
+    },
+    "1": {
+      "volte": true,
+      "wfc": true,
+      "vt": true,
+      "fiveGnr": true,
+      "vonr": true,
+      "show4gForLte": true,
+      "editableWfcMode": true,
+      "wfcWifiOnly": true,
+      "showWifiCallingIcon": true,
+      "crossSimIms": true,
+      "ssOverUt": true
+    }
+  }
+}
