@@ -2,5 +2,5 @@ id=pixel_ru_network_fix
 name=Pixel Russian Networks & 5G/VoLTE Fix
 version=v1.0
 versionCode=100
-author=Antigravity
+author=SilentNode-dev
 description=Enables VoLTE, VoWiFi, 5G (n78/n79/DSS), VoNR, and full LTE-A CA for Russian carriers (MegaFon, Beeline, MTS, T2) on Pixel 8 Pro.
