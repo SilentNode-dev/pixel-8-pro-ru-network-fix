@@ -174,7 +174,58 @@ show_logs() {
     fi
 }
 
+dump_json() {
+    MODEL=$(getprop ro.product.model)
+    DEVICE=$(getprop ro.product.device)
+    ANDROID_VER=$(getprop ro.build.version.release)
+    SECURITY_PATCH=$(getprop ro.build.version.security_patch)
+
+    CFG_SRC="$MODDIR/confpack/cfg.db"
+    UECAP_SRC="$MODDIR/uecap/WILDCARD.binarypb"
+    
+    CFG_ACTIVE="false"
+    if [ -f "$CFG_SRC" ]; then
+        SRC_INODE=$(ls -i "$CFG_SRC" 2>/dev/null | awk '{print $1}')
+        MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/confpack/cfg.db 2>/dev/null | head -n 1 | awk '{print $1}')
+        [ -n "$MOUNTED_INODE" ] && [ "$SRC_INODE" = "$MOUNTED_INODE" ] && CFG_ACTIVE="true"
+    fi
+
+    UE_ACTIVE="false"
+    if [ -f "$UECAP_SRC" ]; then
+        UE_SRC_INODE=$(ls -i "$UECAP_SRC" 2>/dev/null | awk '{print $1}')
+        UE_MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/uecap/WILDCARD.binarypb 2>/dev/null | head -n 1 | awk '{print $1}')
+        [ -n "$UE_MOUNTED_INODE" ] && [ "$UE_SRC_INODE" = "$UE_MOUNTED_INODE" ] && UE_ACTIVE="true"
+    fi
+
+    OPERATORS=$(getprop gsm.sim.operator.alpha)
+    NUMERICS=$(getprop gsm.sim.operator.numeric)
+    NETWORKS=$(getprop gsm.network.type)
+
+    OP1="${OPERATORS%%,*}"
+    [ "$OP1" = "$OPERATORS" ] && OP2="" || OP2="${OPERATORS#*,}"
+    PLMN1="${NUMERICS%%,*}"
+    [ "$PLMN1" = "$NUMERICS" ] && PLMN2="" || PLMN2="${NUMERICS#*,}"
+    NET1="${NETWORKS%%,*}"
+    [ "$NET1" = "$NETWORKS" ] && NET2="" || NET2="${NETWORKS#*,}"
+
+    # IMS registration check via dumpsys notifyDataConnection
+    REG_DUMP=$(dumpsys telephony.registry 2>/dev/null)
+    IMS1="false"
+    IMS2="false"
+    echo "$REG_DUMP" | grep "phoneId=0" | grep "ims" | tail -n 1 | grep -q "CONNECTED" && IMS1="true"
+    echo "$REG_DUMP" | grep "phoneId=1" | grep "ims" | tail -n 1 | grep -q "CONNECTED" && IMS2="true"
+
+    CFG_CONTENT="{}"
+    [ -f "/data/adb/carrier_ims/config.json" ] && CFG_CONTENT=$(cat /data/adb/carrier_ims/config.json 2>/dev/null)
+    [ -z "$CFG_CONTENT" ] && CFG_CONTENT="{}"
+
+    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2}],\"config\":$CFG_CONTENT}"
+}
+
 case "$1" in
+    json)
+        dump_json
+        ;;
     reload|apply)
         reload_fix
         ;;
@@ -185,11 +236,12 @@ case "$1" in
         show_logs
         ;;
     help|-h|--help)
-        echo "Usage: netfix [status|reload|apn|log|help]"
+        echo "Usage: netfix [status|reload|apn|log|json|help]"
         echo "  status  - Show network, IMS, baseband mounts, and 5G status (default)"
         echo "  reload  - Re-inject CarrierConfig and telephony properties without reboot"
         echo "  apn     - Auto-provision certified Russian MVNO and carrier APNs"
         echo "  log     - Show recent IMS and radio logcat entries"
+        echo "  json    - Output full system and telephony status in one compact JSON"
         ;;
     *)
         print_header

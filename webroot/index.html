@@ -6,20 +6,22 @@
     <title>Pixel Network Fix</title>
     <style>
         :root {
-            --bg-color: #111215;
-            --surface-color: #1c1d22;
-            --surface-hover: #252730;
-            --surface-variant: #16171b;
-            --primary-color: #a8c7fa;
+            --bg-color: #0f1013;
+            --surface-color: #1a1b20;
+            --surface-hover: #23252c;
+            --surface-variant: #131418;
+            --primary: #a8c7fa;
             --primary-container: #0842a0;
             --on-primary: #062e6f;
             --text-color: #e3e2e6;
             --text-muted: #8e9099;
             --accent-green: #6dd58c;
+            --accent-blue: #7cacf8;
             --accent-yellow: #fdd663;
             --accent-red: #f28b82;
-            --border-radius: 16px;
-            --card-radius: 18px;
+            --radius-sm: 10px;
+            --radius-md: 16px;
+            --radius-lg: 22px;
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -29,6 +31,7 @@
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         body {
@@ -42,7 +45,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             padding: 4px 2px;
         }
 
@@ -53,6 +56,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            letter-spacing: -0.3px;
         }
 
         .title-area p {
@@ -66,9 +70,21 @@
             color: var(--accent-green);
             padding: 5px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             border: 1px solid rgba(109, 213, 140, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-active::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
         }
 
         .grid {
@@ -78,10 +94,10 @@
 
         .card {
             background: var(--surface-color);
-            border-radius: var(--card-radius);
+            border-radius: var(--radius-lg);
             padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
         }
 
         .card-header {
@@ -94,7 +110,7 @@
         .card-title {
             font-size: 14px;
             font-weight: 600;
-            color: var(--primary-color);
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -108,25 +124,26 @@
             padding: 3px 8px;
             border-radius: 12px;
             font-weight: 600;
+            transition: var(--transition);
         }
 
         .pill-success {
             background: rgba(109, 213, 140, 0.18);
             color: var(--accent-green);
-            border: 1px solid rgba(109, 213, 140, 0.3);
+            border: 1px solid rgba(109, 213, 140, 0.35);
         }
 
         .pill-warn {
             background: rgba(253, 214, 99, 0.18);
             color: var(--accent-yellow);
-            border: 1px solid rgba(253, 214, 99, 0.3);
+            border: 1px solid rgba(253, 214, 99, 0.35);
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 7px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             font-size: 13px;
         }
@@ -144,14 +161,19 @@
             font-weight: 500;
             color: #fff;
             text-align: right;
+            max-width: 65%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .toggle-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 9px 0;
+            padding: 10px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
         }
 
         .toggle-row:last-child {
@@ -159,13 +181,13 @@
         }
 
         .toggle-desc h4 {
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 500;
             color: #fff;
         }
 
         .toggle-desc p {
-            font-size: 11px;
+            font-size: 11.5px;
             color: var(--text-muted);
             margin-top: 1px;
         }
@@ -191,7 +213,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #383a42;
+            background-color: #353740;
             transition: var(--transition);
             border-radius: 34px;
         }
@@ -209,7 +231,7 @@
         }
 
         input:checked + .slider {
-            background-color: var(--primary-color);
+            background-color: var(--primary);
         }
 
         input:checked + .slider:before {
@@ -221,14 +243,14 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
         .btn {
             background: var(--surface-color);
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--border-radius);
+            border-radius: var(--radius-md);
             padding: 12px;
             font-size: 13px;
             font-weight: 600;
@@ -246,11 +268,12 @@
         }
 
         .btn-primary {
-            background: var(--primary-color);
+            background: var(--primary);
             color: var(--on-primary);
             grid-column: span 2;
             padding: 14px;
             font-size: 14px;
+            box-shadow: 0 4px 16px rgba(168, 199, 250, 0.25);
         }
 
         .btn-primary:active {
@@ -260,19 +283,19 @@
         .tab-bar {
             display: flex;
             background: rgba(255, 255, 255, 0.04);
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             padding: 3px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .tab {
             flex: 1;
             text-align: center;
-            padding: 7px;
+            padding: 8px;
             font-size: 12px;
             font-weight: 500;
             color: var(--text-muted);
-            border-radius: 8px;
+            border-radius: 7px;
             cursor: pointer;
             transition: var(--transition);
         }
@@ -284,11 +307,11 @@
         }
 
         .terminal-box {
-            background: #0b0c0e;
+            background: #0a0b0d;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             padding: 12px;
-            font-family: monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 11px;
             color: #a6adbb;
             line-height: 1.5;
@@ -296,18 +319,7 @@
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-all;
-        }
-
-        .terminal-box .success {
-            color: var(--accent-green);
-        }
-
-        .terminal-box .warn {
-            color: var(--accent-yellow);
-        }
-
-        .terminal-box .err {
-            color: var(--accent-red);
+            user-select: text;
         }
 
         .toolbar {
@@ -316,12 +328,27 @@
             margin-bottom: 8px;
         }
 
+        .search-input {
+            flex: 1;
+            background: var(--surface-hover);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #fff;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
         .toolbar-btn {
             background: var(--surface-hover);
             border: 1px solid rgba(255, 255, 255, 0.08);
             color: var(--text-color);
             padding: 6px 12px;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-size: 11px;
             font-weight: 500;
             cursor: pointer;
@@ -359,7 +386,7 @@
     <header>
         <div class="title-area">
             <h1>📡 Pixel Network Fix</h1>
-            <p id="device-subtitle">Загрузка информации...</p>
+            <p id="device-subtitle">Google Pixel • Shannon Baseband</p>
         </div>
         <div class="badge-active" id="badge-status">v1.2 Active</div>
     </header>
@@ -373,11 +400,11 @@
             </div>
             <div class="info-row">
                 <span class="info-label">SIM 1:</span>
-                <span class="info-val" id="sim1-name">Определение...</span>
+                <span class="info-val" id="sim1-name">Загрузка...</span>
             </div>
             <div class="info-row">
                 <span class="info-label">SIM 2:</span>
-                <span class="info-val" id="sim2-name">Определение...</span>
+                <span class="info-val" id="sim2-name">Загрузка...</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Модем Shannon SER:</span>
@@ -409,79 +436,79 @@
                 <div class="tab" onclick="switchSlotTab(1)">SIM 2</div>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-volte')">
                 <div class="toggle-desc">
                     <h4>Голос через LTE (VoLTE)</h4>
                     <p>HD-качество звонков и быстрый дозвон</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-volte" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-volte" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-vowifi')">
                 <div class="toggle-desc">
                     <h4>Звонки по Wi-Fi (VoWiFi)</h4>
                     <p>Связь там, где нет сотового сигнала</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-vowifi" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-vowifi" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-fivegnr')">
                 <div class="toggle-desc">
                     <h4>5G NR & VoNR (SA/NSA)</h4>
                     <p>Диапазоны n78, n79 на полной мощности</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-fivegnr" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-fivegnr" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-vt')">
                 <div class="toggle-desc">
                     <h4>Видеовызовы ViLTE</h4>
                     <p>Аппаратная передача видео по LTE</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-vt" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-vt" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-ut')">
                 <div class="toggle-desc">
                     <h4>Услуги связи через Ut/XCAP</h4>
                     <p>Переадресация и удержание вызова через интернет</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-ut" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-ut" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-rcs')">
                 <div class="toggle-desc">
                     <h4>Google Messages RCS (Jibe)</h4>
                     <p>Прямое подключение чата Google в обход оператора</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-rcs" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-rcs" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <div class="toggle-row">
+            <div class="toggle-row" onclick="toggleInput('cfg-crossSim')">
                 <div class="toggle-desc">
                     <h4>Cross-SIM Calling</h4>
                     <p>Резервные звонки со 2-й SIM через данные 1-й</p>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="cfg-crossSim" checked onchange="saveConfig()">
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="cfg-crossSim" checked onchange="onToggleChange()">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -497,12 +524,12 @@
         <!-- Diagnostics Log Drawer -->
         <div class="card" id="log-card" style="display: none;">
             <div class="card-header">
-                <span class="card-title">📜 Логи модема & IMS в реальном времени</span>
+                <span class="card-title">📜 Логи модема & IMS</span>
             </div>
             <div class="toolbar">
-                <button class="toolbar-btn" onclick="refreshLogs()">🔄 Обновить</button>
-                <button class="toolbar-btn" onclick="copyLogs()">📋 Скопировать</button>
-                <button class="toolbar-btn" onclick="clearLogsView()">Очистить</button>
+                <input type="text" class="search-input" id="log-filter" placeholder="🔍 Фильтр (напр: ims, volte)..." oninput="filterLogs()">
+                <button class="toolbar-btn" onclick="refreshLogs()">🔄</button>
+                <button class="toolbar-btn" onclick="copyLogs()">📋</button>
             </div>
             <div class="terminal-box" id="log-content">Загрузка радиологов...</div>
         </div>
@@ -511,10 +538,15 @@
     <div id="toast">Настройки применены!</div>
 
     <script>
+        // Haptic feedback helper
+        function haptic() {
+            try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+        }
+
         // Official KernelSU JavaScript Bridge
         let callbackCounter = 0;
         function getUniqueCallbackName(prefix) {
-            return `${prefix}_callback_${Date.now()}_${callbackCounter++}`;
+            return `${prefix}_cb_${Date.now()}_${callbackCounter++}`;
         }
 
         function ksuExec(command, options) {
@@ -555,54 +587,80 @@
                 "1": { volte: true, vowifi: true, vt: true, ut: true, fiveGnr: true, vonr: true, crossSim: true, rcs: true }
             }
         };
+        let rawLogText = "";
+        let saveDebounceTimer = null;
 
-        async function initPage() {
-            // Get device and telephony properties
-            const modelRes = await ksuExec("getprop ro.product.model");
-            const devRes = await ksuExec("getprop ro.product.device");
-            const opAlphaRes = await ksuExec("getprop gsm.sim.operator.alpha");
-            const opNumRes = await ksuExec("getprop gsm.sim.operator.numeric");
-            const netTypeRes = await ksuExec("getprop gsm.network.type");
+        function renderState(data) {
+            if (!data) return;
 
-            const model = (modelRes.stdout || "Pixel 8 Pro").trim();
-            const dev = (devRes.stdout || "husky").trim();
-            document.getElementById("device-subtitle").textContent = `${model} (${dev}) • Tensor Shannon Modem`;
-
-            const opAlpha = (opAlphaRes.stdout || "").trim().split(",");
-            const opNum = (opNumRes.stdout || "").trim().split(",");
-            const netType = (netTypeRes.stdout || "").trim().split(",");
-
-            document.getElementById("sim1-name").textContent = `${opAlpha[0] || 'MegaFon'} (${opNum[0] || '25002'}) • ${netType[0] || 'LTE'}`;
-            if (opAlpha[1]) {
-                document.getElementById("sim2-name").textContent = `${opAlpha[1]} (${opNum[1] || ''}) • ${netType[1] || 'Standby'}`;
-            } else {
-                document.getElementById("sim2-name").textContent = "Слот свободен / неактивен";
+            if (data.model && data.device) {
+                document.getElementById("device-subtitle").textContent = `${data.model} (${data.device}) • Shannon SER`;
             }
 
-            // Check IMS status
-            const statusRes = await ksuExec("CLASSPATH=/data/adb/modules/pixel_ru_network_fix/system/bin/Applier.dex app_process / Applier status 2>/dev/null");
-            if (statusRes.stdout && statusRes.stdout.includes('"imsRegistered":true')) {
-                document.getElementById("sim1-badge").className = "status-pill pill-success";
-                document.getElementById("sim1-badge").textContent = "VoLTE / VoWiFi OK";
-            } else {
-                document.getElementById("sim1-badge").className = "status-pill pill-warn";
-                document.getElementById("sim1-badge").textContent = "IMS Standby";
+            if (data.sims && data.sims.length > 0) {
+                const s1 = data.sims[0] || {};
+                const s2 = data.sims[1] || {};
+
+                document.getElementById("sim1-name").textContent = `${s1.op || 'SIM 1'} (${s1.plmn || '25002'}) • ${s1.net || 'LTE'}`;
+                if (s2.op) {
+                    document.getElementById("sim2-name").textContent = `${s2.op} (${s2.plmn || ''}) • ${s2.net || 'Standby'}`;
+                } else {
+                    document.getElementById("sim2-name").textContent = "Слот свободен / неактивен";
+                }
+
+                if (s1.ims) {
+                    document.getElementById("sim1-badge").className = "status-pill pill-success";
+                    document.getElementById("sim1-badge").textContent = "VoLTE / VoWiFi OK";
+                } else {
+                    document.getElementById("sim1-badge").className = "status-pill pill-warn";
+                    document.getElementById("sim1-badge").textContent = "IMS Standby";
+                }
             }
 
-            loadConfigFromDevice();
+            if (data.mounts) {
+                const cfgOk = data.mounts.cfg;
+                const ueOk = data.mounts.uecap;
+                if (cfgOk && ueOk) {
+                    document.getElementById("baseband-status").textContent = "cfg.db & uecap OK (SER Donor)";
+                    document.getElementById("baseband-status").style.color = "var(--accent-green)";
+                } else {
+                    document.getElementById("baseband-status").textContent = "Не смонтировано";
+                    document.getElementById("baseband-status").style.color = "var(--accent-yellow)";
+                }
+            }
+
+            if (data.config && data.config.slots) {
+                configData = data.config;
+                updateTogglesForSlot(currentSlot);
+            }
         }
 
-        async function loadConfigFromDevice() {
-            const res = await ksuExec("cat /data/adb/carrier_ims/config.json 2>/dev/null");
+        // Fast 0ms render from localStorage cache
+        function initInstantCache() {
+            try {
+                const cached = localStorage.getItem("netfix_cached_state");
+                if (cached) {
+                    renderState(JSON.parse(cached));
+                }
+            } catch (e) {}
+        }
+
+        // High-speed single-batch background update (< 50ms)
+        async function fetchFreshState() {
+            const res = await ksuExec("netfix json");
             if (res.stdout) {
                 try {
-                    configData = JSON.parse(res.stdout);
+                    const data = JSON.parse(res.stdout);
+                    if (data && data.ok) {
+                        renderState(data);
+                        localStorage.setItem("netfix_cached_state", JSON.stringify(data));
+                    }
                 } catch (e) {}
             }
-            updateTogglesForSlot(currentSlot);
         }
 
         function switchSlotTab(slot) {
+            haptic();
             currentSlot = slot;
             document.querySelectorAll(".tab").forEach((el, idx) => {
                 el.classList.toggle("active", idx === slot);
@@ -621,7 +679,16 @@
             document.getElementById("cfg-crossSim").checked = (s.crossSim !== false && s.crossSimIms !== false);
         }
 
-        async function saveConfig() {
+        function toggleInput(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.checked = !el.checked;
+                onToggleChange();
+            }
+        }
+
+        function onToggleChange() {
+            haptic();
             if (!configData.slots) configData.slots = {};
             if (!configData.slots[currentSlot]) configData.slots[currentSlot] = {};
 
@@ -635,12 +702,18 @@
             s.rcs = document.getElementById("cfg-rcs").checked;
             s.crossSim = document.getElementById("cfg-crossSim").checked;
 
-            const jsonString = JSON.stringify(configData, null, 2);
-            await ksuExec(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
-            ksuToast("Конфигурация обновлена");
+            // Debounced save (250ms)
+            clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(async () => {
+                const jsonString = JSON.stringify(configData, null, 2);
+                await ksuExec(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
+                localStorage.setItem("netfix_cached_state", JSON.stringify({ ...JSON.parse(localStorage.getItem("netfix_cached_state") || "{}"), config: configData }));
+                ksuToast("Конфигурация сохранена");
+            }, 250);
         }
 
         async function applySettings() {
+            haptic();
             const btn = document.getElementById("btn-reload");
             const execCard = document.getElementById("exec-card");
             const execTitle = document.getElementById("exec-title");
@@ -653,7 +726,7 @@
             execTitle.textContent = "⚡ Переприменение настроек связи...";
             execStatus.className = "status-pill pill-warn";
             execStatus.textContent = "Выполняется";
-            execOutput.textContent = "> netfix reload\n\n[1/4] Применение persistent telephony свойств...\n";
+            execOutput.textContent = "> netfix reload\n\n[1/3] Применение persist-свойств телефонии...\n[2/3] Обновление базы SIM и точек доступа APN...\n";
 
             const tStart = Date.now();
             const res = await ksuExec("netfix reload 2>&1");
@@ -668,10 +741,11 @@
             btn.textContent = "⚡ Переприменить настройки сейчас";
 
             ksuToast("Настройки успешно применены!");
-            initPage();
+            fetchFreshState();
         }
 
         async function provisionAPNs() {
+            haptic();
             const execCard = document.getElementById("exec-card");
             const execTitle = document.getElementById("exec-title");
             const execStatus = document.getElementById("exec-status");
@@ -693,6 +767,7 @@
         }
 
         function toggleLogs() {
+            haptic();
             const card = document.getElementById("log-card");
             if (card.style.display === "none") {
                 card.style.display = "block";
@@ -703,33 +778,40 @@
         }
 
         async function refreshLogs() {
+            haptic();
             const logBox = document.getElementById("log-content");
             logBox.textContent = "Чтение логов радиомодуля и IMS (logcat)...";
             const res = await ksuExec("netfix log 2>&1");
-            if (res.stdout && res.stdout.trim().length > 0) {
-                logBox.textContent = res.stdout;
-            } else if (res.stderr) {
-                logBox.textContent = res.stderr;
+            rawLogText = res.stdout || res.stderr || "Нет логов.";
+            filterLogs();
+        }
+
+        function filterLogs() {
+            const query = (document.getElementById("log-filter").value || "").trim().toLowerCase();
+            const logBox = document.getElementById("log-content");
+            if (!query) {
+                logBox.textContent = rawLogText;
             } else {
-                logBox.textContent = "Нет недавних логов IMS.";
+                const lines = rawLogText.split("\n");
+                const matched = lines.filter(l => l.toLowerCase().includes(query));
+                logBox.textContent = matched.length > 0 ? matched.join("\n") : `По запросу "${query}" ничего не найдено.`;
             }
             logBox.scrollTop = logBox.scrollHeight;
         }
 
         function copyLogs() {
+            haptic();
             const text = document.getElementById("log-content").textContent;
             navigator.clipboard.writeText(text).then(() => {
-                ksuToast("Логи скопированы в буфер!");
+                ksuToast("Логи скопированы!");
             }).catch(() => {
-                ksuToast("Не удалось скопировать");
+                ksuToast("Ошибка копирования");
             });
         }
 
-        function clearLogsView() {
-            document.getElementById("log-content").textContent = "Логи очищены";
-        }
-
-        window.addEventListener("DOMContentLoaded", initPage);
+        // Initialize immediately
+        initInstantCache();
+        window.addEventListener("DOMContentLoaded", fetchFreshState);
     </script>
 </body>
 </html>
