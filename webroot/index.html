@@ -388,7 +388,7 @@
             <h1>📡 Pixel Network Fix</h1>
             <p id="device-subtitle">Google Pixel • Shannon Baseband</p>
         </div>
-        <div class="badge-active" id="badge-status">v1.2 Active</div>
+        <div class="badge-active" id="badge-status">v1.2 Turbo Active</div>
     </header>
 
     <div class="grid">
@@ -519,6 +519,7 @@
             <button class="btn btn-primary" id="btn-reload" onclick="applySettings()">⚡ Переприменить настройки сейчас</button>
             <button class="btn" onclick="provisionAPNs()">🌐 Восстановить APN</button>
             <button class="btn" onclick="toggleLogs()">📋 Логи связи</button>
+            <button class="btn" style="grid-column: span 2;" onclick="testHaptic()">📳 Проверить виброотклик (Haptic Test)</button>
         </div>
 
         <!-- Diagnostics Log Drawer -->
@@ -538,9 +539,13 @@
     <div id="toast">Настройки применены!</div>
 
     <script>
-        // Haptic feedback helper
+        // Haptic feedback helper: tries both Web API and Native Root Vibrator
         function haptic() {
-            try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+            try { 
+                if (navigator.vibrate) navigator.vibrate(15); 
+            } catch (e) {}
+            // Hardware Haptic Kick via Android Vibrator HAL (works even if WebView lacks VIBRATE permission)
+            ksuExec("cmd vibrator perform 0 2>/dev/null || cmd vibrator vibrate 20 2>/dev/null &");
         }
 
         // Official KernelSU JavaScript Bridge
@@ -811,6 +816,12 @@
 
         // Initialize immediately
         initInstantCache();
+        async function testHaptic() {
+            haptic();
+            const res = await ksuExec("cmd vibrator perform 0 2>&1 || cmd vibrator vibrate 50 2>&1");
+            ksuToast("Вибросигнал отправлен! (" + (res.stdout || "OK").trim() + ")");
+        }
+
         window.addEventListener("DOMContentLoaded", fetchFreshState);
     </script>
 </body>
