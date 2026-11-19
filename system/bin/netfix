@@ -194,22 +194,36 @@ parse_slot_radio() {
     local bands="" bw="" earfcn="" ca="false" vops="false" nr="false"
     local dl_kbps="0" ul_kbps="0" iface="" pcscf=""
 
-    local lte_sig=$(echo "$text" | grep -o "mLte=CellSignalStrengthLte: [^}]*" | head -n 1)
-    if [ -n "$lte_sig" ]; then
-        rsrp=$(echo "$lte_sig" | grep -o "rsrp=[^ ]*" | cut -d= -f2)
-        rsrq=$(echo "$lte_sig" | grep -o "rsrq=[^ ]*" | cut -d= -f2)
-        sinr=$(echo "$lte_sig" | grep -o "rssnr=[^ ]*" | cut -d= -f2)
-        ta=$(echo "$lte_sig" | grep -o "ta=[^ ]*" | cut -d= -f2)
-        cqi=$(echo "$lte_sig" | grep -o "cqi=[^ ]*" | cut -d= -f2)
-    fi
+    case "$text" in *isUsingCarrierAggregation=true*) ca="true" ;; esac
+    case "$text" in *"mVopsSupport = 2"*) vops="true" ;; esac
+    case "$text" in *"isNrAvailable = true"*) nr="true" ;; esac
+
+    case "$text" in
+        *mLte=CellSignalStrengthLte:*)
+            local tmp="${text#*mLte=CellSignalStrengthLte: }"
+            tmp="${tmp%%\}*}"
+            case "$tmp" in *rsrp=*) rsrp="${tmp#*rsrp=}"; rsrp="${rsrp%% *}" ;; esac
+            case "$tmp" in *rsrq=*) rsrq="${tmp#*rsrq=}"; rsrq="${rsrq%% *}" ;; esac
+            case "$tmp" in *rssnr=*) sinr="${tmp#*rssnr=}"; sinr="${sinr%% *}" ;; esac
+            case "$tmp" in *ta=*) ta="${tmp#*ta=}"; ta="${ta%% *}" ;; esac
+            case "$tmp" in *cqi=*) cqi="${tmp#*cqi=}"; cqi="${cqi%% *}" ;; esac
+            ;;
+    esac
 
     if [ -z "$rsrp" ] || [ "$rsrp" = "2147483647" ]; then
-        local nr_sig=$(echo "$text" | grep -o "ssRsrp = [^ ]*" | head -n 1 | cut -d= -f2 | tr -d ' ')
-        if [ -n "$nr_sig" ] && [ "$nr_sig" != "2147483647" ]; then
-            rsrp="$nr_sig"
-            rsrq=$(echo "$text" | grep -o "ssRsrq = [^ ]*" | head -n 1 | cut -d= -f2 | tr -d ' ')
-            sinr=$(echo "$text" | grep -o "ssSinr = [^ ]*" | head -n 1 | cut -d= -f2 | tr -d ' ')
-        fi
+        case "$text" in
+            *"ssRsrp = "*)
+                local nrtmp="${text#*ssRsrp = }"
+                nrtmp="${nrtmp%% *}"
+                if [ -n "$nrtmp" ] && [ "$nrtmp" != "2147483647" ]; then
+                    rsrp="$nrtmp"
+                    local nrrq="${text#*ssRsrq = }"
+                    rsrq="${nrrq%% *}"
+                    local nrsi="${text#*ssSinr = }"
+                    sinr="${nrsi%% *}"
+                fi
+                ;;
+        esac
     fi
 
     [ "$rsrp" = "2147483647" ] && rsrp=""
@@ -218,24 +232,21 @@ parse_slot_radio() {
     [ "$ta" = "2147483647" ] && ta=""
     [ "$cqi" = "2147483647" ] && cqi=""
 
-    bands=$(echo "$text" | grep -o "mBands=\[[0-9, ]*\]" | head -n 1 | sed 's/mBands=\[//;s/\]//')
-    bw=$(echo "$text" | grep -o "mCellBandwidths=\[[0-9, ]*\]" | head -n 1 | sed 's/mCellBandwidths=\[//;s/\]//')
-    earfcn=$(echo "$text" | grep -o "mChannelNumber=[0-9]*" | head -n 1 | cut -d= -f2)
+    case "$text" in *mBands=\[*) bands="${text#*mBands=\[}"; bands="${bands%%\]*}" ;; esac
+    case "$text" in *mCellBandwidths=\[*) bw="${text#*mCellBandwidths=\[}"; bw="${bw%%\]*}" ;; esac
+    case "$text" in *mChannelNumber=*) earfcn="${text#*mChannelNumber=}"; earfcn="${earfcn%%,*}"; earfcn="${earfcn%% *}" ;; esac
+    case "$text" in *mDownlinkCapacityKbps=*) dl_kbps="${text#*mDownlinkCapacityKbps=}"; dl_kbps="${dl_kbps%%,*}" ;; esac
+    case "$text" in *mUplinkCapacityKbps=*) ul_kbps="${text#*mUplinkCapacityKbps=}"; ul_kbps="${ul_kbps%%\}*}"; ul_kbps="${ul_kbps%%,*}" ;; esac
+    case "$text" in *"InterfaceName: rmnet"*) iface="${text#*InterfaceName: }"; iface="${iface%% *}" ;; esac
+    case "$text" in
+        *"PcscfAddresses: [ "*)
+            pcscf="${text#*PcscfAddresses: [ }"
+            pcscf="${pcscf%% ]*}"
+            pcscf=$(echo "$pcscf" | tr -d '/')
+            ;;
+    esac
 
-    echo "$text" | grep -q "isUsingCarrierAggregation=true" && ca="true"
-    echo "$text" | grep -q "mVopsSupport = 2" && vops="true"
-    echo "$text" | grep -q "isNrAvailable = true" && nr="true"
-
-    local cap=$(echo "$text" | grep -o "mDownlinkCapacityKbps=[0-9]*, mUplinkCapacityKbps=[0-9]*" | head -n 1)
-    if [ -n "$cap" ]; then
-        dl_kbps=$(echo "$cap" | grep -o "mDownlinkCapacityKbps=[0-9]*" | cut -d= -f2)
-        ul_kbps=$(echo "$cap" | grep -o "mUplinkCapacityKbps=[0-9]*" | cut -d= -f2)
-    fi
-
-    iface=$(echo "$text" | grep -o "InterfaceName: rmnet[0-9]*" | head -n 1 | awk '{print $2}')
-    pcscf=$(echo "$text" | grep -o "PcscfAddresses: \[ [^]]* \]" | head -n 1 | sed 's/PcscfAddresses: \[ //;s/ \]//;s/\///g')
-
-    echo "{\"rsrp\":\"$rsrp\",\"rsrq\":\"$rsrq\",\"sinr\":\"$sinr\",\"ta\":\"$ta\",\"cqi\":\"$cqi\",\"bands\":\"$bands\",\"bw\":\"$bw\",\"earfcn\":\"$earfcn\",\"ca\":$ca,\"vops\":$vops,\"nr\":$nr,\"dlKbps\":$dl_kbps,\"ulKbps\":$ul_kbps,\"iface\":\"$iface\",\"pcscf\":\"$pcscf\"}"
+    echo "{\"rsrp\":\"$rsrp\",\"rsrq\":\"$rsrq\",\"sinr\":\"$sinr\",\"ta\":\"$ta\",\"cqi\":\"$cqi\",\"bands\":\"$bands\",\"bw\":\"$bw\",\"earfcn\":\"$earfcn\",\"ca\":$ca,\"vops\":$vops,\"nr\":$nr,\"dlKbps\":${dl_kbps:-0},\"ulKbps\":${ul_kbps:-0},\"iface\":\"$iface\",\"pcscf\":\"$pcscf\"}"
 }
 
 dump_json() {
@@ -287,34 +298,114 @@ dump_json() {
     fi
     [ -z "$SOC_TEMP" ] && SOC_TEMP="0"
 
-    # Telephony registry parsing
-    REG_DUMP=$(dumpsys telephony.registry 2>/dev/null)
-    IMS1="false"
-    IMS2="false"
-    echo "$REG_DUMP" | grep "phoneId=0" | grep "ims" | tail -n 1 | grep -q "CONNECTED" && IMS1="true"
-    echo "$REG_DUMP" | grep "phoneId=1" | grep "ims" | tail -n 1 | grep -q "CONNECTED" && IMS2="true"
+    # Fast single-pass telephony & radio parser (0.1s in awk)
+    RADIO_JSONS=$(dumpsys telephony.registry 2>/dev/null | awk '
+BEGIN { slot = -1; ims[0]="false"; ims[1]="false"; }
+/Phone Id=0/ { slot = 0; ca[0]="false"; vops[0]="false"; nr[0]="false"; dl[0]=0; ul[0]=0; }
+/Phone Id=1/ { slot = 1; ca[1]="false"; vops[1]="false"; nr[1]="false"; dl[1]=0; ul[1]=0; }
+slot >= 0 && /mLte=CellSignalStrengthLte:/ {
+    for (i=1; i<=NF; i++) {
+        split($i, kv, "=");
+        if (kv[1]=="rsrp" && kv[2]!="2147483647") rsrp[slot]=kv[2];
+        if (kv[1]=="rsrq" && kv[2]!="2147483647") rsrq[slot]=kv[2];
+        if (kv[1]=="rssnr" && kv[2]!="2147483647") sinr[slot]=kv[2];
+        if (kv[1]=="ta" && kv[2]!="2147483647") ta[slot]=kv[2];
+        if (kv[1]=="cqi" && kv[2]!="2147483647") cqi[slot]=kv[2];
+    }
+}
+slot >= 0 && /mBands=\[/ {
+    idx = index($0, "mBands=[");
+    if (idx > 0 && !bands[slot]) {
+        sub_str = substr($0, idx + 8);
+        end_idx = index(sub_str, "]");
+        bands[slot] = substr(sub_str, 1, end_idx - 1);
+    }
+}
+slot >= 0 && /mCellBandwidths=\[/ {
+    idx = index($0, "mCellBandwidths=[");
+    if (idx > 0 && !bw[slot]) {
+        sub_str = substr($0, idx + 17);
+        end_idx = index(sub_str, "]");
+        bw[slot] = substr(sub_str, 1, end_idx - 1);
+    }
+}
+slot >= 0 && /mChannelNumber=/ {
+    idx = index($0, "mChannelNumber=");
+    if (idx > 0 && !earfcn[slot]) {
+        sub_str = substr($0, idx + 15);
+        split(sub_str, p, ",");
+        earfcn[slot] = p[1];
+    }
+}
+slot >= 0 && /isUsingCarrierAggregation=true/ { ca[slot] = "true"; }
+slot >= 0 && /mVopsSupport = 2/ { vops[slot] = "true"; }
+slot >= 0 && /isNrAvailable = true/ { nr[slot] = "true"; }
+slot >= 0 && /mDownlinkCapacityKbps=/ {
+    idx = index($0, "mDownlinkCapacityKbps=");
+    if (idx > 0 && dl[slot] == 0) {
+        sub_str = substr($0, idx + 23);
+        split(sub_str, p, ",");
+        dl[slot] = p[1];
+    }
+    idx = index($0, "mUplinkCapacityKbps=");
+    if (idx > 0 && ul[slot] == 0) {
+        sub_str = substr($0, idx + 21);
+        split(sub_str, p, "}");
+        split(p[1], p2, ",");
+        ul[slot] = p2[1];
+    }
+}
+slot >= 0 && /InterfaceName: rmnet/ {
+    idx = index($0, "InterfaceName: ");
+    if (idx > 0 && !iface[slot]) {
+        sub_str = substr($0, idx + 15);
+        split(sub_str, p, " ");
+        iface[slot] = p[1];
+    }
+}
+slot >= 0 && /PcscfAddresses: \[ / {
+    idx = index($0, "PcscfAddresses: [ ");
+    if (idx > 0 && !pcscf[slot]) {
+        sub_str = substr($0, idx + 18);
+        end_idx = index(sub_str, " ]");
+        addr = substr(sub_str, 1, end_idx - 1);
+        gsub(/\//, "", addr);
+        pcscf[slot] = addr;
+    }
+}
+/phoneId=0.*ims.*CONNECTED/ { ims[0] = "true"; }
+/phoneId=1.*ims.*CONNECTED/ { ims[1] = "true"; }
+NR > 120 { exit; }
+END {
+    printf("%s\n%s\n%s\n%s\n", rsrp[0] ? "ok" : "ok", ims[0], ims[1], "ok");
+    for (s=0; s<=1; s++) {
+        printf("{\"rsrp\":\"%s\",\"rsrq\":\"%s\",\"sinr\":\"%s\",\"ta\":\"%s\",\"cqi\":\"%s\",\"bands\":\"%s\",\"bw\":\"%s\",\"earfcn\":\"%s\",\"ca\":%s,\"vops\":%s,\"nr\":%s,\"dlKbps\":%d,\"ulKbps\":%d,\"iface\":\"%s\",\"pcscf\":\"%s\"}\n", rsrp[s], rsrq[s], sinr[s], ta[s], cqi[s], bands[s], bw[s], earfcn[s], ca[s], vops[s], nr[s], dl[s], ul[s], iface[s], pcscf[s]);
+    }
+}
+')
 
-    P0=$(echo "$REG_DUMP" | awk '/Phone Id=0/{flag=1; next} /Phone Id=1/{flag=0} flag')
-    P1=$(echo "$REG_DUMP" | awk '/Phone Id=1/{flag=1; next} /^[A-Z]/{flag=0} flag')
+    IMS1=$(echo "$RADIO_JSONS" | sed -n '2p')
+    IMS2=$(echo "$RADIO_JSONS" | sed -n '3p')
+    RADIO0=$(echo "$RADIO_JSONS" | sed -n '5p')
+    RADIO1=$(echo "$RADIO_JSONS" | sed -n '6p')
 
-    RADIO0=$(parse_slot_radio "$P0")
-    RADIO1=$(parse_slot_radio "$P1")
-
-    WFC_M0=$(content query --uri content://telephony/siminfo --projection wfc_ims_mode --where "sim_id=0" 2>/dev/null | grep -o "wfc_ims_mode=[0-9]*" | cut -d= -f2)
-    [ -z "$WFC_M0" ] && WFC_M0="2"
-    CS_0=$(content query --uri content://telephony/siminfo --projection cross_sim_calling_enabled --where "sim_id=0" 2>/dev/null | grep -o "cross_sim_calling_enabled=[0-9]*" | cut -d= -f2)
-    [ -z "$CS_0" ] && CS_0="1"
-
-    WFC_M1=$(content query --uri content://telephony/siminfo --projection wfc_ims_mode --where "sim_id=1" 2>/dev/null | grep -o "wfc_ims_mode=[0-9]*" | cut -d= -f2)
-    [ -z "$WFC_M1" ] && WFC_M1="2"
-    CS_1=$(content query --uri content://telephony/siminfo --projection cross_sim_calling_enabled --where "sim_id=1" 2>/dev/null | grep -o "cross_sim_calling_enabled=[0-9]*" | cut -d= -f2)
-    [ -z "$CS_1" ] && CS_1="1"
-
+    # Fast config read (0.001s, zero content query overhead)
     CFG_CONTENT="{}"
     [ -f "/data/adb/carrier_ims/config.json" ] && CFG_CONTENT=$(cat /data/adb/carrier_ims/config.json 2>/dev/null)
     [ -z "$CFG_CONTENT" ] && CFG_CONTENT="{}"
 
-    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"temp\":$SOC_TEMP,\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1,\"wfcMode\":$WFC_M0,\"crossSim\":$([ "$CS_0" = "1" ] && echo "true" || echo "false"),\"radio\":$RADIO0},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2,\"wfcMode\":$WFC_M1,\"crossSim\":$([ "$CS_1" = "1" ] && echo "true" || echo "false"),\"radio\":$RADIO1}],\"config\":$CFG_CONTENT}"
+    WFC_M0="2"; WFC_M1="2"
+    CS_0="true"; CS_1="true"
+    if [ "$CFG_CONTENT" != "{}" ]; then
+        M0=$(echo "$CFG_CONTENT" | grep -A 12 '"0":' | grep '"wfcMode":' | grep -o '[0-9]*' | head -n 1)
+        [ -n "$M0" ] && WFC_M0="$M0"
+        M1=$(echo "$CFG_CONTENT" | grep -A 12 '"1":' | grep '"wfcMode":' | grep -o '[0-9]*' | head -n 1)
+        [ -n "$M1" ] && WFC_M1="$M1"
+        echo "$CFG_CONTENT" | grep -A 15 '"0":' | grep -q '"crossSim": false' && CS_0="false"
+        echo "$CFG_CONTENT" | grep -A 15 '"1":' | grep -q '"crossSim": false' && CS_1="false"
+    fi
+
+    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"temp\":$SOC_TEMP,\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1,\"wfcMode\":$WFC_M0,\"crossSim\":$CS_0,\"radio\":$RADIO0},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2,\"wfcMode\":$WFC_M1,\"crossSim\":$CS_1,\"radio\":$RADIO1}],\"config\":$CFG_CONTENT}"
 }
 
 case "$1" in

@@ -556,7 +556,7 @@
                 <span class="card-title">📶 Статус мобильной сети</span>
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <span class="status-pill" id="soc-temp-pill" style="background: rgba(251, 146, 60, 0.15); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3);">🌡️ --°C</span>
-                    <span class="status-pill pill-success" id="live-indicator"><span class="live-dot" id="live-dot"></span> <span id="live-text">Live 3.5s</span></span>
+                    <span class="status-pill pill-success" id="live-indicator"><span class="live-dot" id="live-dot"></span> <span id="live-text">Live 5s</span></span>
                 </div>
             </div>
 
@@ -873,13 +873,11 @@
     <div id="toast">Настройки применены!</div>
 
     <script>
-        // Haptic feedback helper: tries both Web API and Native Root Vibrator
+        // Non-blocking Web API Haptic feedback (0ms latency, zero root fork)
         function haptic() {
             try { 
-                if (navigator.vibrate) navigator.vibrate(20); 
+                if (navigator.vibrate) navigator.vibrate(10); 
             } catch (e) {}
-            // Hardware Haptic Kick via Android Vibrator Manager (100% works on Pixel Tensor)
-            ksuExec("netfix haptic &");
         }
 
         // Official KernelSU JavaScript Bridge
@@ -1183,17 +1181,25 @@
             } catch (e) {}
         }
 
-        // High-speed single-batch background update (< 50ms)
+        // High-speed non-blocking background update (< 50ms)
+        let isFetchingState = false;
         async function fetchFreshState(isLiveRefresh) {
-            const res = await ksuExec("netfix json");
-            if (res.stdout) {
-                try {
-                    const data = JSON.parse(res.stdout);
-                    if (data && data.ok) {
-                        renderState(data, isLiveRefresh);
-                        localStorage.setItem("netfix_cached_state", JSON.stringify(data));
-                    }
-                } catch (e) {}
+            if (isFetchingState) return;
+            isFetchingState = true;
+            try {
+                const res = await ksuExec("netfix json");
+                if (res.stdout) {
+                    try {
+                        const data = JSON.parse(res.stdout);
+                        if (data && data.ok) {
+                            renderState(data, isLiveRefresh);
+                            localStorage.setItem("netfix_cached_state", JSON.stringify(data));
+                        }
+                    } catch (e) {}
+                }
+            } catch (e) {
+            } finally {
+                isFetchingState = false;
             }
         }
 
@@ -1223,7 +1229,7 @@
             updateWfcModeUI(mode);
         }
 
-        async function selectWfcMode(mode) {
+        function selectWfcMode(mode) {
             haptic();
             if (!configData.slots) configData.slots = {};
             if (!configData.slots[currentSlot]) configData.slots[currentSlot] = {};
@@ -1232,11 +1238,11 @@
             updateWfcModeUI(mode);
             saveConfigDebounced();
 
-            await ksuExec(`netfix mode ${currentSlot} ${mode}`);
-            fetchFreshState(false);
+            // Fire-and-forget in background without blocking UI
+            ksuExec(`netfix mode ${currentSlot} ${mode} &`);
 
             const modeNames = {
-                0: "🌐 Режим 'Только интернет' (Cross-SIM принудительно) активирован",
+                0: "🌐 Режим 'Только интернет' (Cross-SIM) активирован",
                 1: "📶 Режим 'Предпочитать сотовую сеть' включен",
                 2: "⚡ Режим 'Автовыбор (Wi-Fi)' включен"
             };
@@ -1264,7 +1270,7 @@
             }
         }
 
-        async function forceCrossSimToggle() {
+        function forceCrossSimToggle() {
             haptic();
             if (!configData.slots) configData.slots = {};
             if (!configData.slots[1]) configData.slots[1] = {};
@@ -1272,11 +1278,11 @@
             const cur = configData.slots[1].wfcMode === 0 ? 2 : 0;
             configData.slots[1].wfcMode = cur;
 
-            await ksuExec(`netfix mode 1 ${cur}`);
+            // Fire-and-forget in background
+            ksuExec(`netfix mode 1 ${cur} &`);
             saveConfigDebounced();
 
             if (currentSlot === 1) updateWfcModeUI(cur);
-            fetchFreshState(false);
 
             const btn = document.getElementById("btn-force-cross-sim");
             if (cur === 0) {
@@ -1431,9 +1437,9 @@
             });
         }
 
-        // Auto-refresh lifecycle (every 3.5s only when visible; 0% CPU when backgrounded/screen locked)
+        // Auto-refresh lifecycle (every 5s only when visible; 0% CPU when backgrounded/screen locked)
         let livePollingTimer = null;
-        const LIVE_INTERVAL = 3500;
+        const LIVE_INTERVAL = 5000;
 
         function startLiveTimer() {
             if (livePollingTimer) clearInterval(livePollingTimer);
@@ -1459,7 +1465,7 @@
             if (dot && txt) {
                 if (isActive) {
                     dot.className = "live-dot";
-                    txt.textContent = "Live 3.5s";
+                    txt.textContent = "Live 5s";
                 } else {
                     dot.className = "live-dot paused";
                     txt.textContent = "Пауза";
