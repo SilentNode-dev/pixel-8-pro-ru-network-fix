@@ -379,6 +379,113 @@
         #toast.show {
             transform: translateX(-50%) translateY(0);
         }
+
+        /* Live Indicator & Pulse */
+        @keyframes pulseGlow {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #34d399;
+            display: inline-block;
+            box-shadow: 0 0 8px #34d399;
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+        .live-dot.paused {
+            background: #9ca3af;
+            box-shadow: none;
+            animation: none;
+        }
+
+        /* Radio Telemetry Card Styles */
+        .radio-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        .sim-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .signal-meter {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 6px;
+            height: 6px;
+            overflow: hidden;
+            margin: 6px 0 10px 0;
+            position: relative;
+        }
+        .signal-meter-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .metric-box {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+        .metric-label {
+            font-size: 9.5px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+        .metric-val {
+            font-size: 13px;
+            font-weight: 700;
+            font-family: ui-monospace, SFMono-Regular, monospace;
+        }
+        .pill-ca {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 10.5px;
+            font-weight: 600;
+        }
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0 2px 0;
+            cursor: pointer;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            user-select: none;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+        .collapsible-header:hover {
+            color: var(--primary);
+        }
+        .collapsible-content {
+            display: none;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+        .collapsible-content.open {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -388,7 +495,7 @@
             <h1>📡 Pixel Network Fix</h1>
             <p id="device-subtitle">Google Pixel • Shannon Baseband</p>
         </div>
-        <div class="badge-active" id="badge-status">v1.2 Turbo Active</div>
+        <div class="badge-active" id="badge-status">v1.3 Turbo Active</div>
     </header>
 
     <div class="grid">
@@ -396,17 +503,169 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title">📶 Статус мобильной сети</span>
-                <span class="status-pill pill-success" id="sim1-badge">VoLTE OK</span>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <span class="status-pill" id="soc-temp-pill" style="background: rgba(251, 146, 60, 0.15); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3);">🌡️ --°C</span>
+                    <span class="status-pill pill-success" id="live-indicator"><span class="live-dot" id="live-dot"></span> <span id="live-text">Live 3.5s</span></span>
+                </div>
             </div>
-            <div class="info-row">
-                <span class="info-label">SIM 1:</span>
-                <span class="info-val" id="sim1-name">Загрузка...</span>
+
+            <!-- SIM 1 Container -->
+            <div class="radio-card" id="sim0-card">
+                <div class="sim-title-row">
+                    <div>
+                        <strong id="sim0-title" style="font-size: 13px;">SIM 1: Загрузка...</strong>
+                        <div id="sim0-plmn" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">PLMN: -- • Сеть: --</div>
+                    </div>
+                    <span class="status-pill pill-success" id="sim0-badge">VoLTE OK</span>
+                </div>
+
+                <div class="signal-meter">
+                    <div class="signal-meter-fill" id="sim0-meter-fill" style="width: 50%; background: var(--accent-green);"></div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">RSRP (Уровень)</div>
+                        <div class="metric-val" id="sim0-rsrp">-- dBm</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">RSRQ (Качество)</div>
+                        <div class="metric-val" id="sim0-rsrq">-- dB</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">SINR (Шум)</div>
+                        <div class="metric-val" id="sim0-sinr">-- dB</div>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Диапазон (Band):</span>
+                    <span class="info-val" id="sim0-band">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Агрегация частот:</span>
+                    <span class="info-val" id="sim0-ca">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">VoPS (VoLTE Core):</span>
+                    <span class="info-val" id="sim0-vops">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">5G NSA Сота:</span>
+                    <span class="info-val" id="sim0-nr">--</span>
+                </div>
+
+                <div class="collapsible-header" onclick="toggleDetails('sim0-details', this)">
+                    <span>🔍 Инженерные детали соты</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="collapsible-content" id="sim0-details">
+                    <div class="info-row">
+                        <span class="info-label">Канал (EARFCN):</span>
+                        <span class="info-val" id="sim0-earfcn">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Скорость радиоканала:</span>
+                        <span class="info-val" id="sim0-speed">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Дистанция (TA):</span>
+                        <span class="info-val" id="sim0-ta">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Качество CQI:</span>
+                        <span class="info-val" id="sim0-cqi">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Интерфейс модема:</span>
+                        <span class="info-val" id="sim0-iface">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Серверы P-CSCF:</span>
+                        <span class="info-val" id="sim0-pcscf" style="font-size:10.5px; word-break:break-all;">--</span>
+                    </div>
+                </div>
             </div>
-            <div class="info-row">
-                <span class="info-label">SIM 2:</span>
-                <span class="info-val" id="sim2-name">Загрузка...</span>
+
+            <!-- SIM 2 Container -->
+            <div class="radio-card" id="sim1-card" style="display: none; margin-top: 10px;">
+                <div class="sim-title-row">
+                    <div>
+                        <strong id="sim1-title" style="font-size: 13px;">SIM 2: Загрузка...</strong>
+                        <div id="sim1-plmn" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">PLMN: -- • Сеть: --</div>
+                    </div>
+                    <span class="status-pill pill-success" id="sim1-badge">VoLTE OK</span>
+                </div>
+
+                <div class="signal-meter">
+                    <div class="signal-meter-fill" id="sim1-meter-fill" style="width: 50%; background: var(--accent-green);"></div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">RSRP (Уровень)</div>
+                        <div class="metric-val" id="sim1-rsrp">-- dBm</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">RSRQ (Качество)</div>
+                        <div class="metric-val" id="sim1-rsrq">-- dB</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">SINR (Шум)</div>
+                        <div class="metric-val" id="sim1-sinr">-- dB</div>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Диапазон (Band):</span>
+                    <span class="info-val" id="sim1-band">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Агрегация частот:</span>
+                    <span class="info-val" id="sim1-ca">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">VoPS (VoLTE Core):</span>
+                    <span class="info-val" id="sim1-vops">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">5G NSA Сота:</span>
+                    <span class="info-val" id="sim1-nr">--</span>
+                </div>
+
+                <div class="collapsible-header" onclick="toggleDetails('sim1-details', this)">
+                    <span>🔍 Инженерные детали соты</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="collapsible-content" id="sim1-details">
+                    <div class="info-row">
+                        <span class="info-label">Канал (EARFCN):</span>
+                        <span class="info-val" id="sim1-earfcn">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Скорость радиоканала:</span>
+                        <span class="info-val" id="sim1-speed">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Дистанция (TA):</span>
+                        <span class="info-val" id="sim1-ta">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Качество CQI:</span>
+                        <span class="info-val" id="sim1-cqi">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Интерфейс модема:</span>
+                        <span class="info-val" id="sim1-iface">--</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Серверы P-CSCF:</span>
+                        <span class="info-val" id="sim1-pcscf" style="font-size:10.5px; word-break:break-all;">--</span>
+                    </div>
+                </div>
             </div>
-            <div class="info-row">
+
+            <div class="info-row" style="margin-top: 12px;">
                 <span class="info-label">Модем Shannon SER:</span>
                 <span class="info-val" id="baseband-status">cfg.db & uecap OK</span>
             </div>
@@ -542,10 +801,10 @@
         // Haptic feedback helper: tries both Web API and Native Root Vibrator
         function haptic() {
             try { 
-                if (navigator.vibrate) navigator.vibrate(15); 
+                if (navigator.vibrate) navigator.vibrate(20); 
             } catch (e) {}
-            // Hardware Haptic Kick via Android Vibrator HAL (works even if WebView lacks VIBRATE permission)
-            ksuExec("cmd vibrator perform 0 2>/dev/null || cmd vibrator vibrate 20 2>/dev/null &");
+            // Hardware Haptic Kick via Android Vibrator Manager (100% works on Pixel Tensor)
+            ksuExec("netfix haptic &");
         }
 
         // Official KernelSU JavaScript Bridge
@@ -595,31 +854,201 @@
         let rawLogText = "";
         let saveDebounceTimer = null;
 
-        function renderState(data) {
+        function formatBand(bands, bw) {
+            if (!bands || bands.trim() === "") return "LTE / Auto";
+            const bandMap = {
+                "1": "Band 1 (2100 MHz)",
+                "3": "Band 3 (1800 MHz)",
+                "7": "Band 7 (2600 MHz)",
+                "8": "Band 8 (900 MHz)",
+                "20": "Band 20 (800 MHz)",
+                "38": "Band 38 (2600 TDD)",
+                "40": "Band 40 (2300 TDD)",
+                "77": "n77 (3700 MHz)",
+                "78": "n78 (3500 MHz 5G)",
+                "79": "n79 (4800 MHz 5G)"
+            };
+            const bArr = bands.split(",").map(b => b.trim());
+            const formatted = bArr.map(b => bandMap[b] || `Band ${b}`).join(" + ");
+            let bwStr = "";
+            if (bw && bw.trim() !== "") {
+                const bws = bw.split(",").map(w => {
+                    const num = parseInt(w.trim());
+                    return num >= 1000 ? `${num / 1000} МГц` : `${num} кГц`;
+                }).join(" + ");
+                bwStr = ` • ${bws}`;
+            }
+            return formatted + bwStr;
+        }
+
+        function updateSignalMeter(meterFillId, rsrpVal, rsrpTextId) {
+            const fill = document.getElementById(meterFillId);
+            const txt = document.getElementById(rsrpTextId);
+            const num = parseInt(rsrpVal);
+            if (isNaN(num) || num === 0 || num === 2147483647) {
+                if (txt) { txt.textContent = "-- dBm"; txt.style.color = "var(--text-muted)"; }
+                if (fill) fill.style.width = "0%";
+                return;
+            }
+            if (txt) txt.textContent = `${num} dBm`;
+
+            let pct = Math.round(((num - (-125)) / (-65 - (-125))) * 100);
+            pct = Math.max(5, Math.min(100, pct));
+            if (fill) {
+                fill.style.width = `${pct}%`;
+                if (num >= -92) {
+                    fill.style.backgroundColor = "var(--accent-green)";
+                    if (txt) txt.style.color = "var(--accent-green)";
+                } else if (num >= -105) {
+                    fill.style.backgroundColor = "var(--accent-yellow)";
+                    if (txt) txt.style.color = "var(--accent-yellow)";
+                } else {
+                    fill.style.backgroundColor = "var(--accent-red)";
+                    if (txt) txt.style.color = "var(--accent-red)";
+                }
+            }
+        }
+
+        function updateQualityMetrics(slotIdx, radio) {
+            const p = `sim${slotIdx}-`;
+            const rsrqEl = document.getElementById(p + "rsrq");
+            const sinrEl = document.getElementById(p + "sinr");
+
+            if (radio && radio.rsrq && radio.rsrq !== "2147483647") {
+                const q = parseInt(radio.rsrq);
+                rsrqEl.textContent = `${q} dB`;
+                rsrqEl.style.color = q >= -10 ? "var(--accent-green)" : (q >= -15 ? "var(--accent-yellow)" : "var(--accent-red)");
+            } else {
+                rsrqEl.textContent = "-- dB";
+                rsrqEl.style.color = "var(--text-muted)";
+            }
+
+            if (radio && radio.sinr && radio.sinr !== "2147483647") {
+                const s = parseInt(radio.sinr);
+                sinrEl.textContent = `${s >= 0 ? '+' : ''}${s} dB`;
+                sinrEl.style.color = s >= 10 ? "var(--accent-green)" : (s >= 0 ? "var(--accent-yellow)" : "var(--accent-red)");
+            } else {
+                sinrEl.textContent = "-- dB";
+                sinrEl.style.color = "var(--text-muted)";
+            }
+        }
+
+        function toggleDetails(id, headerEl) {
+            haptic();
+            const el = document.getElementById(id);
+            if (!el) return;
+            const isOpen = el.classList.contains("open");
+            el.classList.toggle("open", !isOpen);
+            const arrow = headerEl.querySelector(".arrow");
+            if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
+        }
+
+        function renderSlotRadio(slotIdx, sim) {
+            const p = `sim${slotIdx}-`;
+            const card = document.getElementById(`sim${slotIdx}-card`);
+            if (!sim || (!sim.op && !sim.plmn)) {
+                if (slotIdx === 1) card.style.display = "none";
+                return;
+            }
+            card.style.display = "block";
+
+            const titleEl = document.getElementById(p + "title");
+            const plmnEl = document.getElementById(p + "plmn");
+            const badgeEl = document.getElementById(p + "badge");
+
+            titleEl.textContent = `SIM ${slotIdx + 1}: ${sim.op || 'Оператор'}`;
+            plmnEl.textContent = `PLMN: ${sim.plmn || '--'} • Сеть: ${sim.net || 'LTE'}`;
+
+            if (sim.ims) {
+                badgeEl.className = "status-pill pill-success";
+                badgeEl.textContent = "VoLTE / VoWiFi OK";
+            } else {
+                badgeEl.className = "status-pill pill-warn";
+                badgeEl.textContent = "IMS Standby";
+            }
+
+            const r = sim.radio || {};
+            updateSignalMeter(p + "meter-fill", r.rsrp, p + "rsrp");
+            updateQualityMetrics(slotIdx, r);
+
+            // Band & CA
+            document.getElementById(p + "band").textContent = formatBand(r.bands, r.bw);
+            const caEl = document.getElementById(p + "ca");
+            if (r.ca) {
+                caEl.innerHTML = `<span class="pill-ca">⚡ 4G+ LTE-A (CA)</span>`;
+            } else {
+                caEl.textContent = "1 несущая";
+            }
+
+            // VoPS
+            const vopsEl = document.getElementById(p + "vops");
+            if (r.vops) {
+                vopsEl.innerHTML = `<span style="color:var(--accent-green); font-weight:600;">● Поддерживается (VoLTE)</span>`;
+            } else {
+                vopsEl.innerHTML = `<span style="color:var(--text-muted);">Не заявлен</span>`;
+            }
+
+            // 5G NSA
+            const nrEl = document.getElementById(p + "nr");
+            if (r.nr) {
+                nrEl.innerHTML = `<span style="color:var(--accent-green); font-weight:600;">● Обнаружена (Ready)</span>`;
+            } else {
+                nrEl.innerHTML = `<span style="color:var(--text-muted);">Не обнаружена</span>`;
+            }
+
+            // Engineering details
+            document.getElementById(p + "earfcn").textContent = (r.earfcn && r.earfcn !== "2147483647") ? r.earfcn : "--";
+
+            const speedEl = document.getElementById(p + "speed");
+            if (r.dlKbps && r.dlKbps > 0) {
+                const dl = (r.dlKbps / 1000).toFixed(1);
+                const ul = (r.ulKbps / 1000).toFixed(1);
+                speedEl.textContent = `DL ${dl} Мбит/с • UL ${ul} Мбит/с`;
+            } else {
+                speedEl.textContent = "--";
+            }
+
+            const taEl = document.getElementById(p + "ta");
+            if (r.ta && r.ta !== "2147483647") {
+                const taNum = parseInt(r.ta);
+                if (taNum > 0) {
+                    taEl.textContent = `TA ${taNum} (~${Math.round(taNum * 78)} м)`;
+                } else {
+                    taEl.textContent = "TA 0 (< 100 м)";
+                }
+            } else {
+                taEl.textContent = "--";
+            }
+
+            document.getElementById(p + "cqi").textContent = (r.cqi && r.cqi !== "2147483647") ? `CQI ${r.cqi}` : "--";
+            document.getElementById(p + "iface").textContent = r.iface || "rmnet_data";
+            document.getElementById(p + "pcscf").textContent = r.pcscf || "Авто / DHCPv6";
+        }
+
+        function renderState(data, isLiveRefresh) {
             if (!data) return;
 
             if (data.model && data.device) {
                 document.getElementById("device-subtitle").textContent = `${data.model} (${data.device}) • Shannon SER`;
             }
 
+            if (data.temp !== undefined && data.temp !== null && data.temp > 0) {
+                const tEl = document.getElementById("soc-temp-pill");
+                if (tEl) {
+                    tEl.textContent = `🌡️ ${data.temp}°C`;
+                    if (data.temp >= 45) {
+                        tEl.style.color = "var(--accent-red)";
+                        tEl.style.borderColor = "rgba(242, 139, 130, 0.4)";
+                    } else {
+                        tEl.style.color = "#fb923c";
+                        tEl.style.borderColor = "rgba(251, 146, 60, 0.3)";
+                    }
+                }
+            }
+
             if (data.sims && data.sims.length > 0) {
-                const s1 = data.sims[0] || {};
-                const s2 = data.sims[1] || {};
-
-                document.getElementById("sim1-name").textContent = `${s1.op || 'SIM 1'} (${s1.plmn || '25002'}) • ${s1.net || 'LTE'}`;
-                if (s2.op) {
-                    document.getElementById("sim2-name").textContent = `${s2.op} (${s2.plmn || ''}) • ${s2.net || 'Standby'}`;
-                } else {
-                    document.getElementById("sim2-name").textContent = "Слот свободен / неактивен";
-                }
-
-                if (s1.ims) {
-                    document.getElementById("sim1-badge").className = "status-pill pill-success";
-                    document.getElementById("sim1-badge").textContent = "VoLTE / VoWiFi OK";
-                } else {
-                    document.getElementById("sim1-badge").className = "status-pill pill-warn";
-                    document.getElementById("sim1-badge").textContent = "IMS Standby";
-                }
+                renderSlotRadio(0, data.sims[0]);
+                renderSlotRadio(1, data.sims[1]);
             }
 
             if (data.mounts) {
@@ -634,7 +1063,7 @@
                 }
             }
 
-            if (data.config && data.config.slots) {
+            if (!isLiveRefresh && data.config && data.config.slots) {
                 configData = data.config;
                 updateTogglesForSlot(currentSlot);
             }
@@ -645,19 +1074,19 @@
             try {
                 const cached = localStorage.getItem("netfix_cached_state");
                 if (cached) {
-                    renderState(JSON.parse(cached));
+                    renderState(JSON.parse(cached), false);
                 }
             } catch (e) {}
         }
 
         // High-speed single-batch background update (< 50ms)
-        async function fetchFreshState() {
+        async function fetchFreshState(isLiveRefresh) {
             const res = await ksuExec("netfix json");
             if (res.stdout) {
                 try {
                     const data = JSON.parse(res.stdout);
                     if (data && data.ok) {
-                        renderState(data);
+                        renderState(data, isLiveRefresh);
                         localStorage.setItem("netfix_cached_state", JSON.stringify(data));
                     }
                 } catch (e) {}
@@ -814,15 +1243,63 @@
             });
         }
 
+        // Auto-refresh lifecycle (every 3.5s only when visible; 0% CPU when backgrounded/screen locked)
+        let livePollingTimer = null;
+        const LIVE_INTERVAL = 3500;
+
+        function startLiveTimer() {
+            if (livePollingTimer) clearInterval(livePollingTimer);
+            livePollingTimer = setInterval(() => {
+                if (document.visibilityState === "visible") {
+                    fetchFreshState(true);
+                }
+            }, LIVE_INTERVAL);
+            setLiveBadge(true);
+        }
+
+        function stopLiveTimer() {
+            if (livePollingTimer) {
+                clearInterval(livePollingTimer);
+                livePollingTimer = null;
+            }
+            setLiveBadge(false);
+        }
+
+        function setLiveBadge(isActive) {
+            const dot = document.getElementById("live-dot");
+            const txt = document.getElementById("live-text");
+            if (dot && txt) {
+                if (isActive) {
+                    dot.className = "live-dot";
+                    txt.textContent = "Live 3.5s";
+                } else {
+                    dot.className = "live-dot paused";
+                    txt.textContent = "Пауза";
+                }
+            }
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                fetchFreshState(true);
+                startLiveTimer();
+            } else {
+                stopLiveTimer();
+            }
+        });
+
         // Initialize immediately
         initInstantCache();
         async function testHaptic() {
             haptic();
-            const res = await ksuExec("cmd vibrator perform 0 2>&1 || cmd vibrator vibrate 50 2>&1");
-            ksuToast("Вибросигнал отправлен! (" + (res.stdout || "OK").trim() + ")");
+            await ksuExec("netfix haptic");
+            ksuToast("Виброотклик сработал!");
         }
 
-        window.addEventListener("DOMContentLoaded", fetchFreshState);
+        window.addEventListener("DOMContentLoaded", () => {
+            fetchFreshState(false);
+            startLiveTimer();
+        });
     </script>
 </body>
 </html>

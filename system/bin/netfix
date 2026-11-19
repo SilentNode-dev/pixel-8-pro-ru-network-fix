@@ -174,6 +174,56 @@ show_logs() {
     fi
 }
 
+parse_slot_radio() {
+    local text="$1"
+    local rsrp="" rsrq="" sinr="" ta="" cqi=""
+    local bands="" bw="" earfcn="" ca="false" vops="false" nr="false"
+    local dl_kbps="0" ul_kbps="0" iface="" pcscf=""
+
+    local lte_sig=$(echo "$text" | grep -o "mLte=CellSignalStrengthLte: [^}]*" | head -n 1)
+    if [ -n "$lte_sig" ]; then
+        rsrp=$(echo "$lte_sig" | grep -o "rsrp=[^ ]*" | cut -d= -f2)
+        rsrq=$(echo "$lte_sig" | grep -o "rsrq=[^ ]*" | cut -d= -f2)
+        sinr=$(echo "$lte_sig" | grep -o "rssnr=[^ ]*" | cut -d= -f2)
+        ta=$(echo "$lte_sig" | grep -o "ta=[^ ]*" | cut -d= -f2)
+        cqi=$(echo "$lte_sig" | grep -o "cqi=[^ ]*" | cut -d= -f2)
+    fi
+
+    if [ -z "$rsrp" ] || [ "$rsrp" = "2147483647" ]; then
+        local nr_sig=$(echo "$text" | grep -o "ssRsrp = [^ ]*" | head -n 1 | cut -d= -f2 | tr -d ' ')
+        if [ -n "$nr_sig" ] && [ "$nr_sig" != "2147483647" ]; then
+            rsrp="$nr_sig"
+            rsrq=$(echo "$text" | grep -o "ssRsrq = [^ ]*" | head -n 1 | cut -d= -f2 | tr -d ' ')
+            sinr=$(echo "$text" | grep -o "ssSinr = [^ ]*" | head -n 1 | cut -d= -f2 | tr -d ' ')
+        fi
+    fi
+
+    [ "$rsrp" = "2147483647" ] && rsrp=""
+    [ "$rsrq" = "2147483647" ] && rsrq=""
+    [ "$sinr" = "2147483647" ] && sinr=""
+    [ "$ta" = "2147483647" ] && ta=""
+    [ "$cqi" = "2147483647" ] && cqi=""
+
+    bands=$(echo "$text" | grep -o "mBands=\[[0-9, ]*\]" | head -n 1 | sed 's/mBands=\[//;s/\]//')
+    bw=$(echo "$text" | grep -o "mCellBandwidths=\[[0-9, ]*\]" | head -n 1 | sed 's/mCellBandwidths=\[//;s/\]//')
+    earfcn=$(echo "$text" | grep -o "mChannelNumber=[0-9]*" | head -n 1 | cut -d= -f2)
+
+    echo "$text" | grep -q "isUsingCarrierAggregation=true" && ca="true"
+    echo "$text" | grep -q "mVopsSupport = 2" && vops="true"
+    echo "$text" | grep -q "isNrAvailable = true" && nr="true"
+
+    local cap=$(echo "$text" | grep -o "mDownlinkCapacityKbps=[0-9]*, mUplinkCapacityKbps=[0-9]*" | head -n 1)
+    if [ -n "$cap" ]; then
+        dl_kbps=$(echo "$cap" | grep -o "mDownlinkCapacityKbps=[0-9]*" | cut -d= -f2)
+        ul_kbps=$(echo "$cap" | grep -o "mUplinkCapacityKbps=[0-9]*" | cut -d= -f2)
+    fi
+
+    iface=$(echo "$text" | grep -o "InterfaceName: rmnet[0-9]*" | head -n 1 | awk '{print $2}')
+    pcscf=$(echo "$text" | grep -o "PcscfAddresses: \[ [^]]* \]" | head -n 1 | sed 's/PcscfAddresses: \[ //;s/ \]//;s/\///g')
+
+    echo "{\"rsrp\":\"$rsrp\",\"rsrq\":\"$rsrq\",\"sinr\":\"$sinr\",\"ta\":\"$ta\",\"cqi\":\"$cqi\",\"bands\":\"$bands\",\"bw\":\"$bw\",\"earfcn\":\"$earfcn\",\"ca\":$ca,\"vops\":$vops,\"nr\":$nr,\"dlKbps\":$dl_kbps,\"ulKbps\":$ul_kbps,\"iface\":\"$iface\",\"pcscf\":\"$pcscf\"}"
+}
+
 dump_json() {
     MODEL=$(getprop ro.product.model)
     DEVICE=$(getprop ro.product.device)
@@ -208,21 +258,45 @@ dump_json() {
     NET1="${NETWORKS%%,*}"
     [ "$NET1" = "$NETWORKS" ] && NET2="" || NET2="${NETWORKS#*,}"
 
-    # IMS registration check via dumpsys notifyDataConnection
+    # Temperature from SoC thermal zone or battery
+    SOC_TEMP=""
+    for t in /sys/class/thermal/thermal_zone*/type; do
+        if [ "$(cat "$t" 2>/dev/null)" = "soc_therm" ]; then
+            val=$(cat "${t%/*}/temp" 2>/dev/null)
+            [ -n "$val" ] && SOC_TEMP=$((val / 1000))
+            break
+        fi
+    done
+    if [ -z "$SOC_TEMP" ]; then
+        bval=$(cat /sys/class/power_supply/battery/temp 2>/dev/null)
+        [ -n "$bval" ] && SOC_TEMP=$((bval / 10))
+    fi
+    [ -z "$SOC_TEMP" ] && SOC_TEMP="0"
+
+    # Telephony registry parsing
     REG_DUMP=$(dumpsys telephony.registry 2>/dev/null)
     IMS1="false"
     IMS2="false"
     echo "$REG_DUMP" | grep "phoneId=0" | grep "ims" | tail -n 1 | grep -q "CONNECTED" && IMS1="true"
     echo "$REG_DUMP" | grep "phoneId=1" | grep "ims" | tail -n 1 | grep -q "CONNECTED" && IMS2="true"
 
+    P0=$(echo "$REG_DUMP" | awk '/Phone Id=0/{flag=1; next} /Phone Id=1/{flag=0} flag')
+    P1=$(echo "$REG_DUMP" | awk '/Phone Id=1/{flag=1; next} /^[A-Z]/{flag=0} flag')
+
+    RADIO0=$(parse_slot_radio "$P0")
+    RADIO1=$(parse_slot_radio "$P1")
+
     CFG_CONTENT="{}"
     [ -f "/data/adb/carrier_ims/config.json" ] && CFG_CONTENT=$(cat /data/adb/carrier_ims/config.json 2>/dev/null)
     [ -z "$CFG_CONTENT" ] && CFG_CONTENT="{}"
 
-    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2}],\"config\":$CFG_CONTENT}"
+    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"temp\":$SOC_TEMP,\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1,\"radio\":$RADIO0},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2,\"radio\":$RADIO1}],\"config\":$CFG_CONTENT}"
 }
 
 case "$1" in
+    haptic|vibrate)
+        cmd vibrator_manager synced -f oneshot 22 -a 240 >/dev/null 2>&1 || cmd vibrator_manager feedback 0 >/dev/null 2>&1
+        ;;
     json)
         dump_json
         ;;

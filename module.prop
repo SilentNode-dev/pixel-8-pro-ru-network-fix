@@ -1,6 +1,6 @@
 id=pixel_ru_network_fix
 name=Pixel Russian Networks & 5G/VoLTE Fix
-version=v1.2
-versionCode=120
+version=v1.3
+versionCode=130
 author=SilentNode-dev
-description=Ultimate network fix for Google Pixel 6-9: VoLTE, VoWiFi, 5G (n78/n79), VoNR, LTE-A CA, Google Messages RCS, MVNO APNs, WebUI dashboard, and 'netfix' CLI tool.
+description=Ultimate network fix for Google Pixel 6-9: VoLTE, VoWiFi, 5G (n78/n79), VoNR, LTE-A CA, Google Messages RCS, MVNO APNs, WebUI dashboard with Live Radio & Thermal Engineering Telemetry, and 'netfix' CLI tool.
