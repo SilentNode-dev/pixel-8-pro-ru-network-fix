@@ -2,29 +2,33 @@
   "slots": {
     "0": {
       "volte": true,
-      "wfc": true,
+      "vowifi": true,
       "vt": true,
+      "ut": true,
       "fiveGnr": true,
       "vonr": true,
+      "fiveGPlusIcon": true,
+      "fiveGThresholds": true,
       "show4gForLte": true,
-      "editableWfcMode": true,
-      "wfcWifiOnly": true,
-      "showWifiCallingIcon": true,
-      "crossSimIms": true,
-      "ssOverUt": true
+      "crossSim": true,
+      "rcs": true,
+      "cdmaDisable": true,
+      "emergencyOptimization": true
     },
     "1": {
       "volte": true,
-      "wfc": true,
+      "vowifi": true,
       "vt": true,
+      "ut": true,
       "fiveGnr": true,
       "vonr": true,
+      "fiveGPlusIcon": true,
+      "fiveGThresholds": true,
       "show4gForLte": true,
-      "editableWfcMode": true,
-      "wfcWifiOnly": true,
-      "showWifiCallingIcon": true,
-      "crossSimIms": true,
-      "ssOverUt": true
+      "crossSim": true,
+      "rcs": true,
+      "cdmaDisable": true,
+      "emergencyOptimization": true
     }
   }
 }

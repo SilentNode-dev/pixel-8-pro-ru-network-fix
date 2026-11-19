@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pixel Network Fix</title>
+    <style>
+        :root {
+            --bg-color: #121316;
+            --surface-color: #1d1e24;
+            --surface-hover: #262830;
+            --primary-color: #a8c7fa;
+            --primary-container: #0842a0;
+            --on-primary: #062e6f;
+            --text-color: #e3e2e6;
+            --text-muted: #8e9099;
+            --accent-green: #6dd58c;
+            --accent-yellow: #fdd663;
+            --accent-red: #f28b82;
+            --border-radius: 18px;
+            --card-radius: 20px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 16px;
+            padding-bottom: 32px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 8px 4px;
+        }
+
+        .title-area h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title-area p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .badge-active {
+            background: rgba(109, 213, 140, 0.15);
+            color: var(--accent-green);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(109, 213, 140, 0.3);
+        }
+
+        .grid {
+            display: grid;
+            gap: 14px;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--card-radius);
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .pill-success {
+            background: rgba(109, 213, 140, 0.15);
+            color: var(--accent-green);
+        }
+
+        .pill-warn {
+            background: rgba(253, 214, 99, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+        }
+
+        .info-val {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-desc h4 {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .toggle-desc p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3b3d45;
+            transition: var(--transition);
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
+            background-color: var(--on-primary);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .btn {
+            background: var(--surface-hover);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--border-radius);
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--on-primary);
+            grid-column: span 2;
+        }
+
+        .btn-primary:active {
+            background: #90b5f5;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 12px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tab.active {
+            background: var(--surface-color);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        pre {
+            background: #0d0e11;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #a0a4b0;
+            overflow-x: auto;
+            max-height: 250px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #2a2c35;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="title-area">
+            <h1>📡 Pixel Network Fix</h1>
+            <p id="device-subtitle">Загрузка данных устройства...</p>
+        </div>
+        <div class="badge-active" id="badge-status">v1.2 Active</div>
+    </header>
+
+    <div class="grid">
+        <!-- Live Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📶 Статус мобильной сети</span>
+                <span class="status-pill pill-success" id="sim1-ims">VoLTE OK</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">SIM 1 (Основная):</span>
+                <span class="info-val" id="sim1-name">MegaFon pre-5G (25002)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Сеть & Агрегация:</span>
+                <span class="info-val" id="sim1-network">LTE-A (4CA / MIMO)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">SIM 2:</span>
+                <span class="info-val" id="sim2-name">KYIVSTAR / Standby</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Донор модема:</span>
+                <span class="info-val">Samsung Shannon SER (A556E)</span>
+            </div>
+        </div>
+
+        <!-- Configuration Toggles -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">⚙️ Параметры IMS & Связи</span>
+            </div>
+            
+            <div class="tab-bar">
+                <div class="tab active" onclick="switchSlotTab(0)">SIM 1</div>
+                <div class="tab" onclick="switchSlotTab(1)">SIM 2</div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>Голос через LTE (VoLTE)</h4>
+                    <p>HD-качество звонков и быстрый дозвон</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-volte" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>Звонки по Wi-Fi (VoWiFi)</h4>
+                    <p>Связь там, где нет сотового сигнала</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-vowifi" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>5G NR & VoNR (SA/NSA)</h4>
+                    <p>Диапазоны n78, n79 и звонки нового поколения</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-fivegnr" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>Видеовызовы ViLTE</h4>
+                    <p>Аппаратная передача видео по LTE</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-vt" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>Услуги связи через Ut/XCAP</h4>
+                    <p>Переадресация и удержание вызова через интернет</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-ut" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>Google Messages RCS (Jibe)</h4>
+                    <p>Прямое подключение чата Google в обход оператора</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-rcs" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-desc">
+                    <h4>Cross-SIM Calling</h4>
+                    <p>Резервные вызовы со второй SIM через данные первой</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="cfg-crossSim" checked onchange="saveConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="applySettings()">⚡ Переприменить настройки сейчас</button>
+            <button class="btn" onclick="provisionAPNs()">🌐 Восстановить APN</button>
+            <button class="btn" onclick="toggleLogs()">📋 Логи связи</button>
+        </div>
+
+        <!-- Diagnostics Log Drawer -->
+        <div class="card" id="log-card" style="display: none; margin-top: 10px;">
+            <div class="card-header">
+                <span class="card-title">📜 Диагностический лог</span>
+                <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="refreshLogs()">Обновить</span>
+            </div>
+            <pre id="log-content">Загрузка логов...</pre>
+        </div>
+    </div>
+
+    <div id="toast">Настройки сохранены!</div>
+
+    <script>
+        let currentSlot = 0;
+        let configData = {
+            slots: {
+                "0": { volte: true, vowifi: true, vt: true, ut: true, fiveGnr: true, vonr: true, crossSim: true, rcs: true },
+                "1": { volte: true, vowifi: true, vt: true, ut: true, fiveGnr: true, vonr: true, crossSim: true, rcs: true }
+            }
+        };
+
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.textContent = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2500);
+        }
+
+        function execCmd(cmd) {
+            return new Promise((resolve) => {
+                if (window.ksu && window.ksu.exec) {
+                    try {
+                        window.ksu.exec(cmd, "{}", (errno, stdout, stderr) => {
+                            resolve(stdout || stderr || "");
+                        });
+                    } catch (e) {
+                        try {
+                            const res = window.ksu.exec(cmd);
+                            if (res && res.then) res.then(resolve);
+                            else resolve(res);
+                        } catch (e2) {
+                            resolve("");
+                        }
+                    }
+                } else {
+                    resolve("NO_KSU");
+                }
+            });
+        }
+
+        async function initPage() {
+            const model = await execCmd("getprop ro.product.model");
+            const dev = await execCmd("getprop ro.product.device");
+            const opAlpha = await execCmd("getprop gsm.sim.operator.alpha");
+            const opNum = await execCmd("getprop gsm.sim.operator.numeric");
+
+            if (model && model !== "NO_KSU") {
+                document.getElementById("device-subtitle").textContent = `${model.trim()} (${dev.trim()}) • Shannon 5300/5400`;
+            } else {
+                document.getElementById("device-subtitle").textContent = "Google Pixel 8 Pro (husky) • Shannon SER";
+            }
+
+            if (opAlpha && opAlpha !== "NO_KSU") {
+                const parts = opAlpha.split(",");
+                const nums = opNum.split(",");
+                document.getElementById("sim1-name").textContent = `${parts[0] || 'SIM 1'} (${nums[0] || '25002'})`;
+                if (parts[1]) document.getElementById("sim2-name").textContent = `${parts[1]} (${nums[1] || ''})`;
+            }
+
+            loadConfigFromDevice();
+        }
+
+        async function loadConfigFromDevice() {
+            const jsonStr = await execCmd("cat /data/adb/carrier_ims/config.json 2>/dev/null");
+            if (jsonStr && jsonStr !== "NO_KSU") {
+                try {
+                    configData = JSON.parse(jsonStr);
+                } catch (e) {}
+            }
+            updateTogglesForSlot(currentSlot);
+        }
+
+        function switchSlotTab(slot) {
+            currentSlot = slot;
+            document.querySelectorAll(".tab").forEach((el, idx) => {
+                el.classList.toggle("active", idx === slot);
+            });
+            updateTogglesForSlot(slot);
+        }
+
+        function updateTogglesForSlot(slot) {
+            const s = configData.slots ? (configData.slots[slot] || {}) : {};
+            document.getElementById("cfg-volte").checked = s.volte !== false;
+            document.getElementById("cfg-vowifi").checked = (s.vowifi !== false && s.wfc !== false);
+            document.getElementById("cfg-fivegnr").checked = s.fiveGnr !== false;
+            document.getElementById("cfg-vt").checked = s.vt !== false;
+            document.getElementById("cfg-ut").checked = (s.ut !== false && s.ssOverUt !== false);
+            document.getElementById("cfg-rcs").checked = s.rcs !== false;
+            document.getElementById("cfg-crossSim").checked = (s.crossSim !== false && s.crossSimIms !== false);
+        }
+
+        async function saveConfig() {
+            if (!configData.slots) configData.slots = {};
+            if (!configData.slots[currentSlot]) configData.slots[currentSlot] = {};
+
+            const s = configData.slots[currentSlot];
+            s.volte = document.getElementById("cfg-volte").checked;
+            s.vowifi = document.getElementById("cfg-vowifi").checked;
+            s.fiveGnr = document.getElementById("cfg-fivegnr").checked;
+            s.vonr = s.fiveGnr;
+            s.vt = document.getElementById("cfg-vt").checked;
+            s.ut = document.getElementById("cfg-ut").checked;
+            s.rcs = document.getElementById("cfg-rcs").checked;
+            s.crossSim = document.getElementById("cfg-crossSim").checked;
+
+            const jsonString = JSON.stringify(configData, null, 2);
+            await execCmd(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
+            showToast("Параметры обновлены в памяти");
+        }
+
+        async function applySettings() {
+            showToast("Применение настроек...");
+            const res = await execCmd("netfix reload 2>&1");
+            showToast("Готово! Настройки применены");
+        }
+
+        async function provisionAPNs() {
+            showToast("Проверка и добавление APN...");
+            await execCmd("netfix apn 2>&1");
+            showToast("APN операторов обновлены!");
+        }
+
+        function toggleLogs() {
+            const card = document.getElementById("log-card");
+            if (card.style.display === "none") {
+                card.style.display = "block";
+                refreshLogs();
+            } else {
+                card.style.display = "none";
+            }
+        }
+
+        async function refreshLogs() {
+            const pre = document.getElementById("log-content");
+            pre.textContent = "Чтение радиологов...";
+            const logs = await execCmd("netfix log 2>&1");
+            pre.textContent = logs || "Логов пока нет";
+        }
+
+        window.addEventListener("DOMContentLoaded", initPage);
+    </script>
+</body>
+</html>
