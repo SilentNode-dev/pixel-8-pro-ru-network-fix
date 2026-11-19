@@ -23,7 +23,7 @@ if [ -f "$MODDIR/config.json" ]; then
 fi
 
 # Enable VoLTE/VoWiFi in siminfo table
-content update --uri content://telephony/siminfo --bind volte_vt_enabled:i:1 --bind wfc_ims_enabled:i:1 --bind wfc_ims_mode:i:2 --bind wfc_ims_roaming_mode:i:2 --bind wfc_ims_roaming_enabled:i:1 --bind nr_advanced_calling_enabled:i:1 --bind cross_sim_calling_enabled:i:1 2>/dev/null
+content update --uri content://telephony/siminfo --bind volte_vt_enabled:i:1 --bind video_calling_enabled:i:1 --bind wfc_ims_enabled:i:1 --bind wfc_ims_mode:i:2 --bind wfc_ims_roaming_mode:i:2 --bind wfc_ims_roaming_enabled:i:1 --bind nr_advanced_calling_enabled:i:1 --bind cross_sim_calling_enabled:i:1 2>/dev/null
 
 # Execute Applier to inject CarrierConfig overrides directly via binder
 if [ -f "$MODDIR/system/bin/Applier.dex" ]; then
