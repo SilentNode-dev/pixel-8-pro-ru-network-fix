@@ -165,8 +165,13 @@ reload_fix() {
 }
 
 show_logs() {
-    echo -e "${CYAN}=== Recent Radio & IMS Logcat Entries ===${RESET}"
-    logcat -d -b radio,main -s ShannonIms:V RILJ:V CarrierConfigLoader:V Applier:V | tail -n 60
+    echo -e "${CYAN}=== Live Radio, Modem & IMS Logs ===${RESET}"
+    LOGS=$(logcat -d -b radio -b main | grep -E -i "shannon|ims|carrier|volte|vowifi|applier|5g" | tail -n 80)
+    if [ -n "$LOGS" ]; then
+        echo "$LOGS"
+    else
+        logcat -d -b radio -b main | tail -n 60
+    fi
 }
 
 case "$1" in

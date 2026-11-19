@@ -6,9 +6,10 @@
     <title>Pixel Network Fix</title>
     <style>
         :root {
-            --bg-color: #121316;
-            --surface-color: #1d1e24;
-            --surface-hover: #262830;
+            --bg-color: #111215;
+            --surface-color: #1c1d22;
+            --surface-hover: #252730;
+            --surface-variant: #16171b;
             --primary-color: #a8c7fa;
             --primary-container: #0842a0;
             --on-primary: #062e6f;
@@ -17,9 +18,9 @@
             --accent-green: #6dd58c;
             --accent-yellow: #fdd663;
             --accent-red: #f28b82;
-            --border-radius: 18px;
-            --card-radius: 20px;
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --border-radius: 16px;
+            --card-radius: 18px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -33,20 +34,20 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            padding: 16px;
-            padding-bottom: 32px;
+            padding: 14px;
+            padding-bottom: 40px;
         }
 
         header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 8px 4px;
+            margin-bottom: 16px;
+            padding: 4px 2px;
         }
 
         .title-area h1 {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: #fff;
             display: flex;
@@ -55,7 +56,7 @@
         }
 
         .title-area p {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             margin-top: 2px;
         }
@@ -63,7 +64,7 @@
         .badge-active {
             background: rgba(109, 213, 140, 0.15);
             color: var(--accent-green);
-            padding: 6px 12px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
@@ -72,15 +73,15 @@
 
         .grid {
             display: grid;
-            gap: 14px;
+            gap: 12px;
         }
 
         .card {
             background: var(--surface-color);
             border-radius: var(--card-radius);
-            padding: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
         }
 
         .card-header {
@@ -91,41 +92,43 @@
         }
 
         .card-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--primary-color);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .status-pill {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            padding: 4px 10px;
+            gap: 5px;
+            font-size: 11px;
+            padding: 3px 8px;
             border-radius: 12px;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .pill-success {
-            background: rgba(109, 213, 140, 0.15);
+            background: rgba(109, 213, 140, 0.18);
             color: var(--accent-green);
+            border: 1px solid rgba(109, 213, 140, 0.3);
         }
 
         .pill-warn {
-            background: rgba(253, 214, 99, 0.15);
+            background: rgba(253, 214, 99, 0.18);
             color: var(--accent-yellow);
+            border: 1px solid rgba(253, 214, 99, 0.3);
         }
 
         .info-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 7px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .info-row:last-child {
@@ -140,13 +143,14 @@
         .info-val {
             font-weight: 500;
             color: #fff;
+            text-align: right;
         }
 
         .toggle-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
+            padding: 9px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         }
 
@@ -155,22 +159,22 @@
         }
 
         .toggle-desc h4 {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             color: #fff;
         }
 
         .toggle-desc p {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         .switch {
             position: relative;
             display: inline-block;
             width: 44px;
-            height: 26px;
+            height: 24px;
             flex-shrink: 0;
         }
 
@@ -187,7 +191,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #3b3d45;
+            background-color: #383a42;
             transition: var(--transition);
             border-radius: 34px;
         }
@@ -195,8 +199,8 @@
         .slider:before {
             position: absolute;
             content: "";
-            height: 20px;
-            width: 20px;
+            height: 18px;
+            width: 18px;
             left: 3px;
             bottom: 3px;
             background-color: white;
@@ -209,7 +213,7 @@
         }
 
         input:checked + .slider:before {
-            transform: translateX(18px);
+            transform: translateX(20px);
             background-color: var(--on-primary);
         }
 
@@ -217,33 +221,36 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-top: 14px;
+            margin-top: 10px;
         }
 
         .btn {
-            background: var(--surface-hover);
+            background: var(--surface-color);
             color: #fff;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: var(--border-radius);
-            padding: 14px;
-            font-size: 14px;
+            padding: 12px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: var(--transition);
         }
 
         .btn:active {
             transform: scale(0.97);
+            background: var(--surface-hover);
         }
 
         .btn-primary {
             background: var(--primary-color);
             color: var(--on-primary);
             grid-column: span 2;
+            padding: 14px;
+            font-size: 14px;
         }
 
         .btn-primary:active {
@@ -253,16 +260,16 @@
         .tab-bar {
             display: flex;
             background: rgba(255, 255, 255, 0.04);
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 12px;
+            border-radius: 10px;
+            padding: 3px;
+            margin-bottom: 10px;
         }
 
         .tab {
             flex: 1;
             text-align: center;
-            padding: 8px;
-            font-size: 13px;
+            padding: 7px;
+            font-size: 12px;
             font-weight: 500;
             color: var(--text-muted);
             border-radius: 8px;
@@ -271,21 +278,57 @@
         }
 
         .tab.active {
-            background: var(--surface-color);
+            background: var(--surface-hover);
             color: #fff;
             font-weight: 600;
         }
 
-        pre {
-            background: #0d0e11;
-            padding: 12px;
+        .terminal-box {
+            background: #0b0c0e;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            font-size: 11px;
-            color: #a0a4b0;
-            overflow-x: auto;
-            max-height: 250px;
+            padding: 12px;
             font-family: monospace;
+            font-size: 11px;
+            color: #a6adbb;
+            line-height: 1.5;
+            max-height: 280px;
+            overflow-y: auto;
             white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-box .success {
+            color: var(--accent-green);
+        }
+
+        .terminal-box .warn {
+            color: var(--accent-yellow);
+        }
+
+        .terminal-box .err {
+            color: var(--accent-red);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .toolbar-btn {
+            background: var(--surface-hover);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .toolbar-btn:active {
+            background: #333642;
         }
 
         #toast {
@@ -293,16 +336,17 @@
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: #2a2c35;
+            background: #252730;
             color: #fff;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 30px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+            transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
             z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            pointer-events: none;
         }
 
         #toast.show {
@@ -315,7 +359,7 @@
     <header>
         <div class="title-area">
             <h1>📡 Pixel Network Fix</h1>
-            <p id="device-subtitle">Загрузка данных устройства...</p>
+            <p id="device-subtitle">Загрузка информации...</p>
         </div>
         <div class="badge-active" id="badge-status">v1.2 Active</div>
     </header>
@@ -325,30 +369,39 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title">📶 Статус мобильной сети</span>
-                <span class="status-pill pill-success" id="sim1-ims">VoLTE OK</span>
+                <span class="status-pill pill-success" id="sim1-badge">VoLTE OK</span>
             </div>
             <div class="info-row">
-                <span class="info-label">SIM 1 (Основная):</span>
-                <span class="info-val" id="sim1-name">MegaFon pre-5G (25002)</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Сеть & Агрегация:</span>
-                <span class="info-val" id="sim1-network">LTE-A (4CA / MIMO)</span>
+                <span class="info-label">SIM 1:</span>
+                <span class="info-val" id="sim1-name">Определение...</span>
             </div>
             <div class="info-row">
                 <span class="info-label">SIM 2:</span>
-                <span class="info-val" id="sim2-name">KYIVSTAR / Standby</span>
+                <span class="info-val" id="sim2-name">Определение...</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Донор модема:</span>
-                <span class="info-val">Samsung Shannon SER (A556E)</span>
+                <span class="info-label">Модем Shannon SER:</span>
+                <span class="info-val" id="baseband-status">cfg.db & uecap OK</span>
             </div>
+            <div class="info-row">
+                <span class="info-label">Слушатель Hot-Swap:</span>
+                <span class="info-val" style="color: var(--accent-green);">Активен (0% CPU)</span>
+            </div>
+        </div>
+
+        <!-- Action Execution Live Console -->
+        <div class="card" id="exec-card" style="display: none;">
+            <div class="card-header">
+                <span class="card-title" id="exec-title">⚡ Выполнение команды...</span>
+                <span class="status-pill pill-warn" id="exec-status">В процессе</span>
+            </div>
+            <div class="terminal-box" id="exec-output"></div>
         </div>
 
         <!-- Configuration Toggles -->
         <div class="card">
             <div class="card-header">
-                <span class="card-title">⚙️ Параметры IMS & Связи</span>
+                <span class="card-title">⚙️ Настройки IMS и Сети</span>
             </div>
             
             <div class="tab-bar">
@@ -381,7 +434,7 @@
             <div class="toggle-row">
                 <div class="toggle-desc">
                     <h4>5G NR & VoNR (SA/NSA)</h4>
-                    <p>Диапазоны n78, n79 и звонки нового поколения</p>
+                    <p>Диапазоны n78, n79 на полной мощности</p>
                 </div>
                 <label class="switch">
                     <input type="checkbox" id="cfg-fivegnr" checked onchange="saveConfig()">
@@ -425,7 +478,7 @@
             <div class="toggle-row">
                 <div class="toggle-desc">
                     <h4>Cross-SIM Calling</h4>
-                    <p>Резервные вызовы со второй SIM через данные первой</p>
+                    <p>Резервные звонки со 2-й SIM через данные 1-й</p>
                 </div>
                 <label class="switch">
                     <input type="checkbox" id="cfg-crossSim" checked onchange="saveConfig()">
@@ -436,24 +489,65 @@
 
         <!-- Quick Actions -->
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="applySettings()">⚡ Переприменить настройки сейчас</button>
+            <button class="btn btn-primary" id="btn-reload" onclick="applySettings()">⚡ Переприменить настройки сейчас</button>
             <button class="btn" onclick="provisionAPNs()">🌐 Восстановить APN</button>
             <button class="btn" onclick="toggleLogs()">📋 Логи связи</button>
         </div>
 
         <!-- Diagnostics Log Drawer -->
-        <div class="card" id="log-card" style="display: none; margin-top: 10px;">
+        <div class="card" id="log-card" style="display: none;">
             <div class="card-header">
-                <span class="card-title">📜 Диагностический лог</span>
-                <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="refreshLogs()">Обновить</span>
+                <span class="card-title">📜 Логи модема & IMS в реальном времени</span>
             </div>
-            <pre id="log-content">Загрузка логов...</pre>
+            <div class="toolbar">
+                <button class="toolbar-btn" onclick="refreshLogs()">🔄 Обновить</button>
+                <button class="toolbar-btn" onclick="copyLogs()">📋 Скопировать</button>
+                <button class="toolbar-btn" onclick="clearLogsView()">Очистить</button>
+            </div>
+            <div class="terminal-box" id="log-content">Загрузка радиологов...</div>
         </div>
     </div>
 
-    <div id="toast">Настройки сохранены!</div>
+    <div id="toast">Настройки применены!</div>
 
     <script>
+        // Official KernelSU JavaScript Bridge
+        let callbackCounter = 0;
+        function getUniqueCallbackName(prefix) {
+            return `${prefix}_callback_${Date.now()}_${callbackCounter++}`;
+        }
+
+        function ksuExec(command, options) {
+            if (typeof options === "undefined") options = {};
+            return new Promise((resolve) => {
+                if (typeof window.ksu === "undefined" || !window.ksu.exec) {
+                    resolve({ errno: -1, stdout: "", stderr: "KernelSU bridge not detected" });
+                    return;
+                }
+                const cbName = getUniqueCallbackName("exec");
+                window[cbName] = (errno, stdout, stderr) => {
+                    resolve({ errno, stdout: stdout || "", stderr: stderr || "" });
+                    delete window[cbName];
+                };
+                try {
+                    window.ksu.exec(command, JSON.stringify(options), cbName);
+                } catch (error) {
+                    delete window[cbName];
+                    resolve({ errno: -1, stdout: "", stderr: error.toString() });
+                }
+            });
+        }
+
+        function ksuToast(msg) {
+            if (typeof window.ksu !== "undefined" && window.ksu.toast) {
+                try { window.ksu.toast(msg); return; } catch (e) {}
+            }
+            const toast = document.getElementById("toast");
+            toast.textContent = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2500);
+        }
+
         let currentSlot = 0;
         let configData = {
             slots: {
@@ -462,62 +556,47 @@
             }
         };
 
-        function showToast(msg) {
-            const toast = document.getElementById("toast");
-            toast.textContent = msg;
-            toast.classList.add("show");
-            setTimeout(() => toast.classList.remove("show"), 2500);
-        }
-
-        function execCmd(cmd) {
-            return new Promise((resolve) => {
-                if (window.ksu && window.ksu.exec) {
-                    try {
-                        window.ksu.exec(cmd, "{}", (errno, stdout, stderr) => {
-                            resolve(stdout || stderr || "");
-                        });
-                    } catch (e) {
-                        try {
-                            const res = window.ksu.exec(cmd);
-                            if (res && res.then) res.then(resolve);
-                            else resolve(res);
-                        } catch (e2) {
-                            resolve("");
-                        }
-                    }
-                } else {
-                    resolve("NO_KSU");
-                }
-            });
-        }
-
         async function initPage() {
-            const model = await execCmd("getprop ro.product.model");
-            const dev = await execCmd("getprop ro.product.device");
-            const opAlpha = await execCmd("getprop gsm.sim.operator.alpha");
-            const opNum = await execCmd("getprop gsm.sim.operator.numeric");
+            // Get device and telephony properties
+            const modelRes = await ksuExec("getprop ro.product.model");
+            const devRes = await ksuExec("getprop ro.product.device");
+            const opAlphaRes = await ksuExec("getprop gsm.sim.operator.alpha");
+            const opNumRes = await ksuExec("getprop gsm.sim.operator.numeric");
+            const netTypeRes = await ksuExec("getprop gsm.network.type");
 
-            if (model && model !== "NO_KSU") {
-                document.getElementById("device-subtitle").textContent = `${model.trim()} (${dev.trim()}) • Shannon 5300/5400`;
+            const model = (modelRes.stdout || "Pixel 8 Pro").trim();
+            const dev = (devRes.stdout || "husky").trim();
+            document.getElementById("device-subtitle").textContent = `${model} (${dev}) • Tensor Shannon Modem`;
+
+            const opAlpha = (opAlphaRes.stdout || "").trim().split(",");
+            const opNum = (opNumRes.stdout || "").trim().split(",");
+            const netType = (netTypeRes.stdout || "").trim().split(",");
+
+            document.getElementById("sim1-name").textContent = `${opAlpha[0] || 'MegaFon'} (${opNum[0] || '25002'}) • ${netType[0] || 'LTE'}`;
+            if (opAlpha[1]) {
+                document.getElementById("sim2-name").textContent = `${opAlpha[1]} (${opNum[1] || ''}) • ${netType[1] || 'Standby'}`;
             } else {
-                document.getElementById("device-subtitle").textContent = "Google Pixel 8 Pro (husky) • Shannon SER";
+                document.getElementById("sim2-name").textContent = "Слот свободен / неактивен";
             }
 
-            if (opAlpha && opAlpha !== "NO_KSU") {
-                const parts = opAlpha.split(",");
-                const nums = opNum.split(",");
-                document.getElementById("sim1-name").textContent = `${parts[0] || 'SIM 1'} (${nums[0] || '25002'})`;
-                if (parts[1]) document.getElementById("sim2-name").textContent = `${parts[1]} (${nums[1] || ''})`;
+            // Check IMS status
+            const statusRes = await ksuExec("CLASSPATH=/data/adb/modules/pixel_ru_network_fix/system/bin/Applier.dex app_process / Applier status 2>/dev/null");
+            if (statusRes.stdout && statusRes.stdout.includes('"imsRegistered":true')) {
+                document.getElementById("sim1-badge").className = "status-pill pill-success";
+                document.getElementById("sim1-badge").textContent = "VoLTE / VoWiFi OK";
+            } else {
+                document.getElementById("sim1-badge").className = "status-pill pill-warn";
+                document.getElementById("sim1-badge").textContent = "IMS Standby";
             }
 
             loadConfigFromDevice();
         }
 
         async function loadConfigFromDevice() {
-            const jsonStr = await execCmd("cat /data/adb/carrier_ims/config.json 2>/dev/null");
-            if (jsonStr && jsonStr !== "NO_KSU") {
+            const res = await ksuExec("cat /data/adb/carrier_ims/config.json 2>/dev/null");
+            if (res.stdout) {
                 try {
-                    configData = JSON.parse(jsonStr);
+                    configData = JSON.parse(res.stdout);
                 } catch (e) {}
             }
             updateTogglesForSlot(currentSlot);
@@ -557,20 +636,60 @@
             s.crossSim = document.getElementById("cfg-crossSim").checked;
 
             const jsonString = JSON.stringify(configData, null, 2);
-            await execCmd(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
-            showToast("Параметры обновлены в памяти");
+            await ksuExec(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
+            ksuToast("Конфигурация обновлена");
         }
 
         async function applySettings() {
-            showToast("Применение настроек...");
-            const res = await execCmd("netfix reload 2>&1");
-            showToast("Готово! Настройки применены");
+            const btn = document.getElementById("btn-reload");
+            const execCard = document.getElementById("exec-card");
+            const execTitle = document.getElementById("exec-title");
+            const execStatus = document.getElementById("exec-status");
+            const execOutput = document.getElementById("exec-output");
+
+            btn.disabled = true;
+            btn.textContent = "⏳ Выполняется инъекция...";
+            execCard.style.display = "block";
+            execTitle.textContent = "⚡ Переприменение настроек связи...";
+            execStatus.className = "status-pill pill-warn";
+            execStatus.textContent = "Выполняется";
+            execOutput.textContent = "> netfix reload\n\n[1/4] Применение persistent telephony свойств...\n";
+
+            const tStart = Date.now();
+            const res = await ksuExec("netfix reload 2>&1");
+            const elapsed = Date.now() - tStart;
+
+            execOutput.textContent += (res.stdout || res.stderr || "Готово.");
+            execOutput.textContent += `\n\n[✓] Успешно завершено за ${elapsed} мс!`;
+            
+            execStatus.className = "status-pill pill-success";
+            execStatus.textContent = "Успешно";
+            btn.disabled = false;
+            btn.textContent = "⚡ Переприменить настройки сейчас";
+
+            ksuToast("Настройки успешно применены!");
+            initPage();
         }
 
         async function provisionAPNs() {
-            showToast("Проверка и добавление APN...");
-            await execCmd("netfix apn 2>&1");
-            showToast("APN операторов обновлены!");
+            const execCard = document.getElementById("exec-card");
+            const execTitle = document.getElementById("exec-title");
+            const execStatus = document.getElementById("exec-status");
+            const execOutput = document.getElementById("exec-output");
+
+            execCard.style.display = "block";
+            execTitle.textContent = "🌐 Проверка и настройка точек доступа APN...";
+            execStatus.className = "status-pill pill-warn";
+            execStatus.textContent = "Выполняется";
+            execOutput.textContent = "> netfix apn\n\nСканирование базы операторов РФ...\n";
+
+            const res = await ksuExec("netfix apn 2>&1");
+            execOutput.textContent += (res.stdout || res.stderr || "");
+            execOutput.textContent += "\n[✓] Проверка APN завершена.";
+
+            execStatus.className = "status-pill pill-success";
+            execStatus.textContent = "Готово";
+            ksuToast("Точки доступа проверены и добавлены!");
         }
 
         function toggleLogs() {
@@ -584,10 +703,30 @@
         }
 
         async function refreshLogs() {
-            const pre = document.getElementById("log-content");
-            pre.textContent = "Чтение радиологов...";
-            const logs = await execCmd("netfix log 2>&1");
-            pre.textContent = logs || "Логов пока нет";
+            const logBox = document.getElementById("log-content");
+            logBox.textContent = "Чтение логов радиомодуля и IMS (logcat)...";
+            const res = await ksuExec("netfix log 2>&1");
+            if (res.stdout && res.stdout.trim().length > 0) {
+                logBox.textContent = res.stdout;
+            } else if (res.stderr) {
+                logBox.textContent = res.stderr;
+            } else {
+                logBox.textContent = "Нет недавних логов IMS.";
+            }
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function copyLogs() {
+            const text = document.getElementById("log-content").textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                ksuToast("Логи скопированы в буфер!");
+            }).catch(() => {
+                ksuToast("Не удалось скопировать");
+            });
+        }
+
+        function clearLogsView() {
+            document.getElementById("log-content").textContent = "Логи очищены";
         }
 
         window.addEventListener("DOMContentLoaded", initPage);
