@@ -142,15 +142,29 @@ reload_fix() {
     setprop persist.radio.is_vonr_enabled_1 true
 
     echo -e "${CYAN}Updating SIM Info database...${RESET}"
-    content update --uri content://telephony/siminfo \
-        --bind volte_vt_enabled:i:1 \
-        --bind video_calling_enabled:i:1 \
-        --bind wfc_ims_enabled:i:1 \
-        --bind wfc_ims_mode:i:2 \
-        --bind wfc_ims_roaming_mode:i:2 \
-        --bind wfc_ims_roaming_enabled:i:1 \
-        --bind nr_advanced_calling_enabled:i:1 \
-        --bind cross_sim_calling_enabled:i:1 2>/dev/null
+    CFG_FILE="/data/adb/carrier_ims/config.json"
+    for slot in 0 1; do
+        WFC_MODE="2"
+        CROSS_SIM="1"
+        if [ -f "$CFG_FILE" ]; then
+            SLOT_MODE=$(grep -A 12 "\"$slot\":" "$CFG_FILE" 2>/dev/null | grep "\"wfcMode\":" | grep -o "[0-9]*" | head -n 1)
+            [ -n "$SLOT_MODE" ] && WFC_MODE="$SLOT_MODE"
+            if grep -A 15 "\"$slot\":" "$CFG_FILE" 2>/dev/null | grep "\"crossSim\": false" >/dev/null; then
+                CROSS_SIM="0"
+            fi
+        fi
+
+        content update --uri content://telephony/siminfo \
+            --bind volte_vt_enabled:i:1 \
+            --bind video_calling_enabled:i:1 \
+            --bind wfc_ims_enabled:i:1 \
+            --bind wfc_ims_mode:i:$WFC_MODE \
+            --bind wfc_ims_roaming_mode:i:$WFC_MODE \
+            --bind wfc_ims_roaming_enabled:i:1 \
+            --bind nr_advanced_calling_enabled:i:1 \
+            --bind cross_sim_calling_enabled:i:$CROSS_SIM \
+            --where "sim_id=$slot" 2>/dev/null
+    done
 
     provision_apns
 
@@ -286,16 +300,37 @@ dump_json() {
     RADIO0=$(parse_slot_radio "$P0")
     RADIO1=$(parse_slot_radio "$P1")
 
+    WFC_M0=$(content query --uri content://telephony/siminfo --projection wfc_ims_mode --where "sim_id=0" 2>/dev/null | grep -o "wfc_ims_mode=[0-9]*" | cut -d= -f2)
+    [ -z "$WFC_M0" ] && WFC_M0="2"
+    CS_0=$(content query --uri content://telephony/siminfo --projection cross_sim_calling_enabled --where "sim_id=0" 2>/dev/null | grep -o "cross_sim_calling_enabled=[0-9]*" | cut -d= -f2)
+    [ -z "$CS_0" ] && CS_0="1"
+
+    WFC_M1=$(content query --uri content://telephony/siminfo --projection wfc_ims_mode --where "sim_id=1" 2>/dev/null | grep -o "wfc_ims_mode=[0-9]*" | cut -d= -f2)
+    [ -z "$WFC_M1" ] && WFC_M1="2"
+    CS_1=$(content query --uri content://telephony/siminfo --projection cross_sim_calling_enabled --where "sim_id=1" 2>/dev/null | grep -o "cross_sim_calling_enabled=[0-9]*" | cut -d= -f2)
+    [ -z "$CS_1" ] && CS_1="1"
+
     CFG_CONTENT="{}"
     [ -f "/data/adb/carrier_ims/config.json" ] && CFG_CONTENT=$(cat /data/adb/carrier_ims/config.json 2>/dev/null)
     [ -z "$CFG_CONTENT" ] && CFG_CONTENT="{}"
 
-    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"temp\":$SOC_TEMP,\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1,\"radio\":$RADIO0},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2,\"radio\":$RADIO1}],\"config\":$CFG_CONTENT}"
+    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"temp\":$SOC_TEMP,\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1,\"wfcMode\":$WFC_M0,\"crossSim\":$([ "$CS_0" = "1" ] && echo "true" || echo "false"),\"radio\":$RADIO0},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2,\"wfcMode\":$WFC_M1,\"crossSim\":$([ "$CS_1" = "1" ] && echo "true" || echo "false"),\"radio\":$RADIO1}],\"config\":$CFG_CONTENT}"
 }
 
 case "$1" in
     haptic|vibrate)
         cmd vibrator_manager synced -f oneshot 22 -a 240 >/dev/null 2>&1 || cmd vibrator_manager feedback 0 >/dev/null 2>&1
+        ;;
+    mode)
+        SLOT="${2:-0}"
+        VAL="${3:-2}"
+        content update --uri content://telephony/siminfo \
+            --bind wfc_ims_mode:i:$VAL \
+            --bind wfc_ims_roaming_mode:i:$VAL \
+            --bind wfc_ims_enabled:i:1 \
+            --bind cross_sim_calling_enabled:i:1 \
+            --where "sim_id=$SLOT" >/dev/null 2>&1
+        echo "{\"ok\":true,\"slot\":$SLOT,\"mode\":$VAL}"
         ;;
     json)
         dump_json

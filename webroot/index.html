@@ -486,6 +486,57 @@
         .collapsible-content.open {
             display: block;
         }
+
+        /* Segmented Mode Selector Styles */
+        .setting-block {
+            padding: 12px 0 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .setting-title-row h4 {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #fff;
+        }
+        .setting-title-row p {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin: 2px 0 8px 0;
+            line-height: 1.4;
+        }
+        .segmented-control {
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            gap: 4px;
+        }
+        .seg-btn {
+            flex: 1;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 8px 4px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .seg-btn:active {
+            transform: scale(0.97);
+        }
+        .seg-btn.active {
+            background: var(--surface-hover);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .seg-btn.danger.active {
+            background: rgba(244, 63, 94, 0.2);
+            color: #fb7185;
+            border-color: rgba(244, 63, 94, 0.35);
+        }
     </style>
 </head>
 <body>
@@ -495,7 +546,7 @@
             <h1>📡 Pixel Network Fix</h1>
             <p id="device-subtitle">Google Pixel • Shannon Baseband</p>
         </div>
-        <div class="badge-active" id="badge-status">v1.3 Turbo Active</div>
+        <div class="badge-active" id="badge-status">v1.4 Turbo Active</div>
     </header>
 
     <div class="grid">
@@ -553,6 +604,10 @@
                 <div class="info-row">
                     <span class="info-label">5G NSA Сота:</span>
                     <span class="info-val" id="sim0-nr">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Приоритет вызовов:</span>
+                    <span class="info-val" id="sim0-wfcmode">--</span>
                 </div>
 
                 <div class="collapsible-header" onclick="toggleDetails('sim0-details', this)">
@@ -631,6 +686,10 @@
                 <div class="info-row">
                     <span class="info-label">5G NSA Сота:</span>
                     <span class="info-val" id="sim1-nr">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Приоритет вызовов:</span>
+                    <span class="info-val" id="sim1-wfcmode">--</span>
                 </div>
 
                 <div class="collapsible-header" onclick="toggleDetails('sim1-details', this)">
@@ -717,6 +776,21 @@
                 </label>
             </div>
 
+            <!-- Calling Priority & Cross-SIM Mode -->
+            <div class="setting-block">
+                <div class="setting-title-row">
+                    <div>
+                        <h4>Приоритет вызовов (Режим VoWiFi / Cross-SIM)</h4>
+                        <p id="wfc-mode-desc">Выберите режим маршрутизации голосовых вызовов</p>
+                    </div>
+                </div>
+                <div class="segmented-control" id="wfc-mode-selector">
+                    <button type="button" class="seg-btn" data-mode="1" onclick="selectWfcMode(1)">📶 Сотовая</button>
+                    <button type="button" class="seg-btn active" data-mode="2" onclick="selectWfcMode(2)">⚡ Авто (Wi-Fi)</button>
+                    <button type="button" class="seg-btn danger" data-mode="0" onclick="selectWfcMode(0)">🌐 Только Интернет</button>
+                </div>
+            </div>
+
             <div class="toggle-row" onclick="toggleInput('cfg-fivegnr')">
                 <div class="toggle-desc">
                     <h4>5G NR & VoNR (SA/NSA)</h4>
@@ -776,6 +850,7 @@
         <!-- Quick Actions -->
         <div class="btn-group">
             <button class="btn btn-primary" id="btn-reload" onclick="applySettings()">⚡ Переприменить настройки сейчас</button>
+            <button class="btn" id="btn-force-cross-sim" style="grid-column: span 2; border-color: rgba(244, 63, 94, 0.35); background: rgba(244, 63, 94, 0.12); color: #fb7185;" onclick="forceCrossSimToggle()">🌐 Форсировать звонки SIM 2 через интернет (Cross-SIM)</button>
             <button class="btn" onclick="provisionAPNs()">🌐 Восстановить APN</button>
             <button class="btn" onclick="toggleLogs()">📋 Логи связи</button>
             <button class="btn" style="grid-column: span 2;" onclick="testHaptic()">📳 Проверить виброотклик (Haptic Test)</button>
@@ -996,6 +1071,19 @@
                 nrEl.innerHTML = `<span style="color:var(--text-muted);">Не обнаружена</span>`;
             }
 
+            // Call priority mode (WFC / Cross-SIM)
+            const wfcModeEl = document.getElementById(p + "wfcmode");
+            const wfcMode = (sim.wfcMode !== undefined) ? parseInt(sim.wfcMode) : 2;
+            if (wfcModeEl) {
+                if (wfcMode === 0) {
+                    wfcModeEl.innerHTML = `<span class="pill-ca" style="background: rgba(244, 63, 94, 0.18); color: #fb7185; border-color: rgba(244, 63, 94, 0.35);">🌐 Только Интернет (Cross-SIM)</span>`;
+                } else if (wfcMode === 1) {
+                    wfcModeEl.innerHTML = `<span style="color: var(--text-muted);">📶 Предпочитать сотовую</span>`;
+                } else {
+                    wfcModeEl.innerHTML = `<span style="color: var(--accent-blue); font-weight:600;">⚡ Авто (Wi-Fi/Интернет)</span>`;
+                }
+            }
+
             // Engineering details
             document.getElementById(p + "earfcn").textContent = (r.earfcn && r.earfcn !== "2147483647") ? r.earfcn : "--";
 
@@ -1049,6 +1137,22 @@
             if (data.sims && data.sims.length > 0) {
                 renderSlotRadio(0, data.sims[0]);
                 renderSlotRadio(1, data.sims[1]);
+            }
+
+            const forceBtn = document.getElementById("btn-force-cross-sim");
+            if (forceBtn && data.sims && data.sims[1]) {
+                const s2Mode = parseInt(data.sims[1].wfcMode);
+                if (s2Mode === 0) {
+                    forceBtn.textContent = "🌐 Отключить принудительный Cross-SIM (SIM 2: В сети)";
+                    forceBtn.style.background = "rgba(109, 213, 140, 0.15)";
+                    forceBtn.style.borderColor = "rgba(109, 213, 140, 0.35)";
+                    forceBtn.style.color = "var(--accent-green)";
+                } else {
+                    forceBtn.textContent = "🌐 Форсировать звонки SIM 2 через интернет (Cross-SIM)";
+                    forceBtn.style.background = "rgba(244, 63, 94, 0.12)";
+                    forceBtn.style.borderColor = "rgba(244, 63, 94, 0.35)";
+                    forceBtn.style.color = "#fb7185";
+                }
             }
 
             if (data.mounts) {
@@ -1111,6 +1215,96 @@
             document.getElementById("cfg-ut").checked = (s.ut !== false && s.ssOverUt !== false);
             document.getElementById("cfg-rcs").checked = s.rcs !== false;
             document.getElementById("cfg-crossSim").checked = (s.crossSim !== false && s.crossSimIms !== false);
+
+            let mode = 2;
+            if (s.wfcMode !== undefined) {
+                mode = parseInt(s.wfcMode);
+            }
+            updateWfcModeUI(mode);
+        }
+
+        async function selectWfcMode(mode) {
+            haptic();
+            if (!configData.slots) configData.slots = {};
+            if (!configData.slots[currentSlot]) configData.slots[currentSlot] = {};
+
+            configData.slots[currentSlot].wfcMode = mode;
+            updateWfcModeUI(mode);
+            saveConfigDebounced();
+
+            await ksuExec(`netfix mode ${currentSlot} ${mode}`);
+            fetchFreshState(false);
+
+            const modeNames = {
+                0: "🌐 Режим 'Только интернет' (Cross-SIM принудительно) активирован",
+                1: "📶 Режим 'Предпочитать сотовую сеть' включен",
+                2: "⚡ Режим 'Автовыбор (Wi-Fi)' включен"
+            };
+            ksuToast(`SIM ${currentSlot + 1}: ${modeNames[mode] || mode}`);
+        }
+
+        function updateWfcModeUI(mode) {
+            const descEl = document.getElementById("wfc-mode-desc");
+            const container = document.getElementById("wfc-mode-selector");
+            if (!container) return;
+
+            container.querySelectorAll(".seg-btn").forEach(btn => {
+                const btnMode = parseInt(btn.getAttribute("data-mode"));
+                btn.classList.toggle("active", btnMode === mode);
+            });
+
+            if (descEl) {
+                if (mode === 0) {
+                    descEl.innerHTML = `<span style="color:#fb7185; font-weight:600;">Принудительно через интернет (Cross-SIM):</span> сотовый голос отключен, звонки идут через интернет второй SIM или Wi-Fi.`;
+                } else if (mode === 1) {
+                    descEl.textContent = "Предпочитать сотовую вышку, интернет использовать только при обрыве связи.";
+                } else {
+                    descEl.textContent = "Автовыбор: предпочитать Wi-Fi / интернет при стабильном соединении (Рекомендуется).";
+                }
+            }
+        }
+
+        async function forceCrossSimToggle() {
+            haptic();
+            if (!configData.slots) configData.slots = {};
+            if (!configData.slots[1]) configData.slots[1] = {};
+
+            const cur = configData.slots[1].wfcMode === 0 ? 2 : 0;
+            configData.slots[1].wfcMode = cur;
+
+            await ksuExec(`netfix mode 1 ${cur}`);
+            saveConfigDebounced();
+
+            if (currentSlot === 1) updateWfcModeUI(cur);
+            fetchFreshState(false);
+
+            const btn = document.getElementById("btn-force-cross-sim");
+            if (cur === 0) {
+                if (btn) {
+                    btn.textContent = "🌐 Отключить принудительный Cross-SIM (SIM 2: В сети)";
+                    btn.style.background = "rgba(109, 213, 140, 0.15)";
+                    btn.style.borderColor = "rgba(109, 213, 140, 0.35)";
+                    btn.style.color = "var(--accent-green)";
+                }
+                ksuToast("SIM 2: Режим 'Только интернет' (Cross-SIM) активирован!");
+            } else {
+                if (btn) {
+                    btn.textContent = "🌐 Форсировать звонки SIM 2 через интернет (Cross-SIM)";
+                    btn.style.background = "rgba(244, 63, 94, 0.12)";
+                    btn.style.borderColor = "rgba(244, 63, 94, 0.35)";
+                    btn.style.color = "#fb7185";
+                }
+                ksuToast("SIM 2: Возвращен стандартный режим 'Автовыбор'");
+            }
+        }
+
+        function saveConfigDebounced() {
+            clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(async () => {
+                const jsonString = JSON.stringify(configData, null, 2);
+                await ksuExec(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
+                localStorage.setItem("netfix_cached_state", JSON.stringify({ ...JSON.parse(localStorage.getItem("netfix_cached_state") || "{}"), config: configData }));
+            }, 250);
         }
 
         function toggleInput(id) {
@@ -1136,14 +1330,8 @@
             s.rcs = document.getElementById("cfg-rcs").checked;
             s.crossSim = document.getElementById("cfg-crossSim").checked;
 
-            // Debounced save (250ms)
-            clearTimeout(saveDebounceTimer);
-            saveDebounceTimer = setTimeout(async () => {
-                const jsonString = JSON.stringify(configData, null, 2);
-                await ksuExec(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
-                localStorage.setItem("netfix_cached_state", JSON.stringify({ ...JSON.parse(localStorage.getItem("netfix_cached_state") || "{}"), config: configData }));
-                ksuToast("Конфигурация сохранена");
-            }, 250);
+            saveConfigDebounced();
+            ksuToast("Конфигурация сохранена");
         }
 
         async function applySettings() {
