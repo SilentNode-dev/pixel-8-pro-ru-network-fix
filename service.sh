@@ -8,11 +8,13 @@ done
 
 sleep 2
 
-# Apply persistent telephony properties
-setprop persist.dbg.ims_volte_enable 1
-setprop persist.dbg.volte_avail_ovr 1
-setprop persist.dbg.vt_avail_ovr 1
-setprop persist.dbg.wfc_avail_ovr 1
+# Clean up any debug props that trigger banking anti-tamper SDKs (Mir Pay, banks)
+resetprop --delete persist.dbg.ims_volte_enable 2>/dev/null
+resetprop --delete persist.dbg.volte_avail_ovr 2>/dev/null
+resetprop --delete persist.dbg.vt_avail_ovr 2>/dev/null
+resetprop --delete persist.dbg.wfc_avail_ovr 2>/dev/null
+
+# Apply persistent telephony properties (standard production AOSP keys)
 setprop persist.radio.is_vonr_enabled_0 true
 setprop persist.radio.is_vonr_enabled_1 true
 

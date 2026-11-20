@@ -133,11 +133,11 @@ provision_apns() {
 }
 
 reload_fix() {
-    echo -e "${CYAN}Applying persistent telephony properties...${RESET}"
-    setprop persist.dbg.ims_volte_enable 1
-    setprop persist.dbg.volte_avail_ovr 1
-    setprop persist.dbg.vt_avail_ovr 1
-    setprop persist.dbg.wfc_avail_ovr 1
+    echo -e "${CYAN}Applying persistent telephony properties (Stealth mode)...${RESET}"
+    resetprop --delete persist.dbg.ims_volte_enable 2>/dev/null
+    resetprop --delete persist.dbg.volte_avail_ovr 2>/dev/null
+    resetprop --delete persist.dbg.vt_avail_ovr 2>/dev/null
+    resetprop --delete persist.dbg.wfc_avail_ovr 2>/dev/null
     setprop persist.radio.is_vonr_enabled_0 true
     setprop persist.radio.is_vonr_enabled_1 true
 
