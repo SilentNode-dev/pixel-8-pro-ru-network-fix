@@ -29,24 +29,22 @@ check_modem_mounts() {
     CFG_SRC="$MODDIR/confpack/cfg.db"
     UECAP_SRC="$MODDIR/uecap/WILDCARD.binarypb"
     
-    if [ -f "$CFG_SRC" ]; then
-        SRC_INODE=$(ls -i "$CFG_SRC" 2>/dev/null | awk '{print $1}')
-        MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/confpack/cfg.db 2>/dev/null | head -n 1 | awk '{print $1}')
-        if [ -n "$MOUNTED_INODE" ] && [ "$SRC_INODE" = "$MOUNTED_INODE" ]; then
-            echo -e " Baseband cfg.db:      ${GREEN}ACTIVE${RESET} (inode: $MOUNTED_INODE, Shannon SER Donor)"
-        else
-            echo -e " Baseband cfg.db:      ${RED}NOT MOUNTED${RESET}"
-        fi
+    MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/confpack/cfg.db 2>/dev/null | head -n 1 | awk '{print $1}')
+    SRC_INODE=$(ls -i "$CFG_SRC" 2>/dev/null | awk '{print $1}')
+    DONOR_INODE=$(ls -i /dev/.modem_donor/cfg.db 2>/dev/null | awk '{print $1}')
+    if [ -n "$MOUNTED_INODE" ] && { [ "$SRC_INODE" = "$MOUNTED_INODE" ] || [ "$DONOR_INODE" = "$MOUNTED_INODE" ]; }; then
+        echo -e " Baseband cfg.db:      ${GREEN}ACTIVE${RESET} (inode: $MOUNTED_INODE, Stealth SER Donor)"
+    else
+        echo -e " Baseband cfg.db:      ${RED}NOT MOUNTED${RESET}"
     fi
 
-    if [ -f "$UECAP_SRC" ]; then
-        UE_SRC_INODE=$(ls -i "$UECAP_SRC" 2>/dev/null | awk '{print $1}')
-        UE_MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/uecap/WILDCARD.binarypb 2>/dev/null | head -n 1 | awk '{print $1}')
-        if [ -n "$UE_MOUNTED_INODE" ] && [ "$UE_SRC_INODE" = "$UE_MOUNTED_INODE" ]; then
-            echo -e " Modem UE Capabilities:${GREEN}ACTIVE${RESET} (inode: $UE_MOUNTED_INODE, Wildcard CA/5G)"
-        else
-            echo -e " Modem UE Capabilities:${RED}NOT MOUNTED${RESET}"
-        fi
+    UE_MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/uecap/WILDCARD.binarypb 2>/dev/null | head -n 1 | awk '{print $1}')
+    UE_SRC_INODE=$(ls -i "$UECAP_SRC" 2>/dev/null | awk '{print $1}')
+    UE_DONOR_INODE=$(ls -i /dev/.modem_donor/WILDCARD.binarypb 2>/dev/null | awk '{print $1}')
+    if [ -n "$UE_MOUNTED_INODE" ] && { [ "$UE_SRC_INODE" = "$UE_MOUNTED_INODE" ] || [ "$UE_DONOR_INODE" = "$UE_MOUNTED_INODE" ]; }; then
+        echo -e " Modem UE Capabilities:${GREEN}ACTIVE${RESET} (inode: $UE_MOUNTED_INODE, Stealth Wildcard CA/5G)"
+    else
+        echo -e " Modem UE Capabilities:${RED}NOT MOUNTED${RESET}"
     fi
 }
 
