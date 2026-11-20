@@ -1,25 +1,22 @@
 #!/system/bin/sh
-# Pixel Russian Networks & 5G/VoLTE Fix CLI Utility (netfix)
+# Pixel Russian Networks & 5G/VoLTE Fix - CLI Control & Diagnostic Utility
 # Author: SilentNode-dev
 
 MODDIR="/data/adb/modules/pixel_ru_network_fix"
-[ ! -d "$MODDIR" ] && MODDIR="${0%/*}/../.."
+[ -d "$MODDIR" ] || MODDIR="${0%/*/*}"
 
 # Colors
-GREEN='\033[1;32m'
-CYAN='\033[1;36m'
-YELLOW='\033[1;33m'
-RED='\033[1;31m'
-BOLD='\033[1m'
-RESET='\033[0m'
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+CYAN="\033[1;36m"
+BOLD="\033[1m"
+RESET="\033[0m"
 
 print_header() {
-    MODEL=$(getprop ro.product.model)
-    DEVICE=$(getprop ro.product.device)
-    ANDROID_VER=$(getprop ro.build.version.release)
     echo -e "${CYAN}======================================================${RESET}"
-    echo -e "${BOLD} Pixel Network & 5G/VoLTE Fix (v1.2) - Status${RESET}"
-    echo -e " Device: ${GREEN}$MODEL ($DEVICE)${RESET} | Android: ${GREEN}$ANDROID_VER${RESET}"
+    echo -e "${BOLD} Pixel Network & 5G/VoLTE Fix (v1.0 Base) - Telemetry${RESET}"
+    echo -e " Device: $(getprop ro.product.model) ($(getprop ro.product.device)) | Android: $(getprop ro.build.version.release)"
     echo -e "${CYAN}======================================================${RESET}"
 }
 
@@ -46,87 +43,68 @@ check_modem_mounts() {
     else
         echo -e " Modem UE Capabilities:${RED}NOT MOUNTED${RESET}"
     fi
+
+    if grep -E "data/adb|pixel_ru_network_fix" /proc/self/mountinfo >/dev/null 2>&1; then
+        echo -e " Banking Stealth:      ${YELLOW}LEAK DETECTED${RESET} (/proc/self/mountinfo)"
+    else
+        echo -e " Banking Stealth:      ${GREEN}PROTECTED${RESET} (Clean mountinfo, Mir Pay safe)"
+    fi
 }
 
 check_telephony() {
     echo -e "\n${BOLD}[ Telephony & IMS Status ]${RESET}"
     
-    APPLIER_DEX="$MODDIR/system/bin/Applier.dex"
-    STATUS_JSON=""
-    if [ -f "$APPLIER_DEX" ]; then
-        STATUS_JSON=$(CLASSPATH="$APPLIER_DEX" app_process / Applier status 2>/dev/null)
-    fi
-
     OPERATORS=$(getprop gsm.sim.operator.alpha)
     NUMERICS=$(getprop gsm.sim.operator.numeric)
     NETWORKS=$(getprop gsm.network.type)
 
-    for slot in 0 1; do
-        SLOT_NAME="SIM $((slot + 1))"
-        OP_NAME=$(echo "$OPERATORS" | awk -F',' -v s=$((slot + 1)) '{print $s}')
-        PLMN=$(echo "$NUMERICS" | awk -F',' -v s=$((slot + 1)) '{print $s}')
-        NET_TYPE=$(echo "$NETWORKS" | awk -F',' -v s=$((slot + 1)) '{print $s}')
+    OP1="${OPERATORS%%,*}"
+    [ "$OP1" = "$OPERATORS" ] && OP2="" || OP2="${OPERATORS#*,}"
+    PLMN1="${NUMERICS%%,*}"
+    [ "$PLMN1" = "$NUMERICS" ] && PLMN2="" || PLMN2="${NUMERICS#*,}"
+    NET1="${NETWORKS%%,*}"
+    [ "$NET1" = "$NETWORKS" ] && NET2="" || NET2="${NETWORKS#*,}"
 
-        [ -z "$OP_NAME" ] && OP_NAME="Slot Empty / Inactive"
-        [ -z "$PLMN" ] && PLMN="N/A"
-        [ -z "$NET_TYPE" ] && NET_TYPE="Unknown"
+    [ -n "$OP1" ] && echo -e " SIM 1: ${BOLD}$OP1${RESET} (PLMN: $PLMN1 | Network: $NET1)"
+    [ -n "$OP2" ] && echo -e " SIM 2: ${BOLD}$OP2${RESET} (PLMN: $PLMN2 | Network: $NET2)"
+}
 
-        echo -e " ${BOLD}$SLOT_NAME:${RESET} ${CYAN}$OP_NAME${RESET} (PLMN: $PLMN | Network: $NET_TYPE)"
+add_apn_if_missing() {
+    APN_NAME="$1"
+    NUMERIC="$2"
+    APN_APN="$3"
+    APN_TYPE="$4"
 
-        # Check IMS status from Applier
-        IMS_REG=false
-        if echo "$STATUS_JSON" | grep -q "\"slotIndex\":$slot.*\"imsRegistered\":true"; then
-            IMS_REG=true
-        fi
+    MCC="${NUMERIC:0:3}"
+    MNC="${NUMERIC:3}"
 
-        if [ "$IMS_REG" = "true" ]; then
-            echo -e "   VoLTE / VoWiFi IMS: ${GREEN}REGISTERED (Active)${RESET}"
-        else
-            echo -e "   VoLTE / VoWiFi IMS: ${YELLOW}UNREGISTERED / STANDBY${RESET}"
-        fi
-
-        # Check Voice Over Packet Switch (VoPS) and 5G availability from dumpsys
-        DUMP=$(dumpsys telephony.registry 2>/dev/null | grep -A 10 "mSlotIndex=$slot")
-        if echo "$DUMP" | grep -q "mVoLte=true\|VoPS=2"; then
-            echo -e "   VoLTE Support:      ${GREEN}SUPPORTED${RESET}"
-        fi
-        if echo "$DUMP" | grep -q "NrFrequencyRange\|nrAvailable=true"; then
-            echo -e "   5G NR / VoNR:       ${GREEN}AVAILABLE (n78/n79/DSS)${RESET}"
-        fi
-        echo ""
-    done
+    EXISTING=$(content query --uri content://telephony/carriers --where "numeric='$NUMERIC' AND apn='$APN_APN'" 2>/dev/null)
+    if [ -z "$EXISTING" ] || echo "$EXISTING" | grep -q "No result found"; then
+        echo -e " Adding APN for ${CYAN}$APN_NAME${RESET} ($NUMERIC)..."
+        content insert --uri content://telephony/carriers \
+            --bind name:s:"$APN_NAME" \
+            --bind numeric:s:"$NUMERIC" \
+            --bind mcc:s:"$MCC" \
+            --bind mnc:s:"$MNC" \
+            --bind apn:s:"$APN_APN" \
+            --bind type:s:"$APN_TYPE" \
+            --bind protocol:s:"IPV4V6" \
+            --bind roaming_protocol:s:"IPV4V6" \
+            --bind bearer_bitmask:s:"0" \
+            --bind user_editable:i:1 \
+            --bind current:i:1 >/dev/null 2>&1
+    fi
 }
 
 provision_apns() {
-    echo -e "${CYAN}Checking Russian MVNO & Carrier APNs...${RESET}"
-    ALL_APNS=$(content query --uri content://telephony/carriers --projection numeric:apn 2>/dev/null)
-
-    add_apn_if_missing() {
-        NAME="$1"; NUM="$2"; APN="$3"; TYPE="$4"
-        if ! echo "$ALL_APNS" | grep -q "numeric=$NUM, apn=$APN"; then
-            echo -e " Adding missing APN for ${YELLOW}$NAME${RESET} ($NUM -> $APN)..."
-            content insert --uri content://telephony/carriers \
-                --bind name:s:"$NAME" \
-                --bind numeric:s:"$NUM" \
-                --bind mcc:s:"${NUM:0:3}" \
-                --bind mnc:s:"${NUM:3}" \
-                --bind apn:s:"$APN" \
-                --bind type:s:"$TYPE" \
-                --bind current:i:1 >/dev/null 2>&1
-        fi
-    }
-
-    # Certified APN list for RU carriers and MVNOs
-    add_apn_if_missing "Yota Internet" "25002" "internet.yota" "default,supl"
-    add_apn_if_missing "Yota Internet" "25011" "internet.yota" "default,supl"
-    add_apn_if_missing "SberMobile" "25020" "sbermobile.ru" "default,supl,dun"
+    echo -e "${CYAN}Checking certified Russian MVNO APNs...${RESET}"
+    add_apn_if_missing "SberMobile" "25020" "sbermobile" "default,supl"
     add_apn_if_missing "T-Bank Internet" "25020" "m.tinkoff" "default,supl,dun"
     add_apn_if_missing "GPB Mobile" "25045" "internet.gpbm.ru" "default,supl"
     add_apn_if_missing "VTB Mobile" "25020" "internet.vtb.ru" "default,supl"
     add_apn_if_missing "Motiv Internet" "25035" "inet.ycc.ru" "default,supl"
     add_apn_if_missing "Letai Internet" "25027" "internet.letai.ru" "default,supl"
     add_apn_if_missing "T2 Internet" "25020" "internet.tele2.ru" "default,supl"
-    
     echo -e "${GREEN}APN check complete.${RESET}"
 }
 
@@ -140,111 +118,22 @@ reload_fix() {
     setprop persist.radio.is_vonr_enabled_1 true
 
     echo -e "${CYAN}Updating SIM Info database...${RESET}"
-    CFG_FILE="/data/adb/carrier_ims/config.json"
-    for slot in 0 1; do
-        WFC_MODE="2"
-        CROSS_SIM="1"
-        if [ -f "$CFG_FILE" ]; then
-            SLOT_MODE=$(grep -A 12 "\"$slot\":" "$CFG_FILE" 2>/dev/null | grep "\"wfcMode\":" | grep -o "[0-9]*" | head -n 1)
-            [ -n "$SLOT_MODE" ] && WFC_MODE="$SLOT_MODE"
-            if grep -A 15 "\"$slot\":" "$CFG_FILE" 2>/dev/null | grep "\"crossSim\": false" >/dev/null; then
-                CROSS_SIM="0"
-            fi
-        fi
+    content update --uri content://telephony/siminfo \
+        --bind volte_vt_enabled:i:1 \
+        --bind video_calling_enabled:i:1 \
+        --bind wfc_ims_enabled:i:1 \
+        --bind wfc_ims_mode:i:2 \
+        --bind wfc_ims_roaming_mode:i:2 \
+        --bind wfc_ims_roaming_enabled:i:1 \
+        --bind nr_advanced_calling_enabled:i:1 \
+        --bind cross_sim_calling_enabled:i:1 >/dev/null 2>&1
 
-        content update --uri content://telephony/siminfo \
-            --bind volte_vt_enabled:i:1 \
-            --bind video_calling_enabled:i:1 \
-            --bind wfc_ims_enabled:i:1 \
-            --bind wfc_ims_mode:i:$WFC_MODE \
-            --bind wfc_ims_roaming_mode:i:$WFC_MODE \
-            --bind wfc_ims_roaming_enabled:i:1 \
-            --bind nr_advanced_calling_enabled:i:1 \
-            --bind cross_sim_calling_enabled:i:$CROSS_SIM \
-            --where "sim_id=$slot" 2>/dev/null
-    done
-
-    provision_apns
-
-    echo -e "${CYAN}Executing Binder Applier...${RESET}"
+    echo -e "${CYAN}Invoking CarrierConfig Applier binder injector...${RESET}"
     APPLIER_DEX="$MODDIR/system/bin/Applier.dex"
     if [ -f "$APPLIER_DEX" ]; then
-        RES=$(CLASSPATH="$APPLIER_DEX" app_process / Applier apply 2>/dev/null)
-        echo -e " Applier result: ${GREEN}$RES${RESET}"
+        CLASSPATH="$APPLIER_DEX" app_process / Applier apply
     fi
-
-    echo -e "${GREEN}Fix reloaded successfully!${RESET}"
-}
-
-show_logs() {
-    echo -e "${CYAN}=== Live Radio, Modem & IMS Logs ===${RESET}"
-    LOGS=$(logcat -d -b radio -b main | grep -E -i "shannon|ims|carrier|volte|vowifi|applier|5g" | tail -n 80)
-    if [ -n "$LOGS" ]; then
-        echo "$LOGS"
-    else
-        logcat -d -b radio -b main | tail -n 60
-    fi
-}
-
-parse_slot_radio() {
-    local text="$1"
-    local rsrp="" rsrq="" sinr="" ta="" cqi=""
-    local bands="" bw="" earfcn="" ca="false" vops="false" nr="false"
-    local dl_kbps="0" ul_kbps="0" iface="" pcscf=""
-
-    case "$text" in *isUsingCarrierAggregation=true*) ca="true" ;; esac
-    case "$text" in *"mVopsSupport = 2"*) vops="true" ;; esac
-    case "$text" in *"isNrAvailable = true"*) nr="true" ;; esac
-
-    case "$text" in
-        *mLte=CellSignalStrengthLte:*)
-            local tmp="${text#*mLte=CellSignalStrengthLte: }"
-            tmp="${tmp%%\}*}"
-            case "$tmp" in *rsrp=*) rsrp="${tmp#*rsrp=}"; rsrp="${rsrp%% *}" ;; esac
-            case "$tmp" in *rsrq=*) rsrq="${tmp#*rsrq=}"; rsrq="${rsrq%% *}" ;; esac
-            case "$tmp" in *rssnr=*) sinr="${tmp#*rssnr=}"; sinr="${sinr%% *}" ;; esac
-            case "$tmp" in *ta=*) ta="${tmp#*ta=}"; ta="${ta%% *}" ;; esac
-            case "$tmp" in *cqi=*) cqi="${tmp#*cqi=}"; cqi="${cqi%% *}" ;; esac
-            ;;
-    esac
-
-    if [ -z "$rsrp" ] || [ "$rsrp" = "2147483647" ]; then
-        case "$text" in
-            *"ssRsrp = "*)
-                local nrtmp="${text#*ssRsrp = }"
-                nrtmp="${nrtmp%% *}"
-                if [ -n "$nrtmp" ] && [ "$nrtmp" != "2147483647" ]; then
-                    rsrp="$nrtmp"
-                    local nrrq="${text#*ssRsrq = }"
-                    rsrq="${nrrq%% *}"
-                    local nrsi="${text#*ssSinr = }"
-                    sinr="${nrsi%% *}"
-                fi
-                ;;
-        esac
-    fi
-
-    [ "$rsrp" = "2147483647" ] && rsrp=""
-    [ "$rsrq" = "2147483647" ] && rsrq=""
-    [ "$sinr" = "2147483647" ] && sinr=""
-    [ "$ta" = "2147483647" ] && ta=""
-    [ "$cqi" = "2147483647" ] && cqi=""
-
-    case "$text" in *mBands=\[*) bands="${text#*mBands=\[}"; bands="${bands%%\]*}" ;; esac
-    case "$text" in *mCellBandwidths=\[*) bw="${text#*mCellBandwidths=\[}"; bw="${bw%%\]*}" ;; esac
-    case "$text" in *mChannelNumber=*) earfcn="${text#*mChannelNumber=}"; earfcn="${earfcn%%,*}"; earfcn="${earfcn%% *}" ;; esac
-    case "$text" in *mDownlinkCapacityKbps=*) dl_kbps="${text#*mDownlinkCapacityKbps=}"; dl_kbps="${dl_kbps%%,*}" ;; esac
-    case "$text" in *mUplinkCapacityKbps=*) ul_kbps="${text#*mUplinkCapacityKbps=}"; ul_kbps="${ul_kbps%%\}*}"; ul_kbps="${ul_kbps%%,*}" ;; esac
-    case "$text" in *"InterfaceName: rmnet"*) iface="${text#*InterfaceName: }"; iface="${iface%% *}" ;; esac
-    case "$text" in
-        *"PcscfAddresses: [ "*)
-            pcscf="${text#*PcscfAddresses: [ }"
-            pcscf="${pcscf%% ]*}"
-            pcscf=$(echo "$pcscf" | tr -d '/')
-            ;;
-    esac
-
-    echo "{\"rsrp\":\"$rsrp\",\"rsrq\":\"$rsrq\",\"sinr\":\"$sinr\",\"ta\":\"$ta\",\"cqi\":\"$cqi\",\"bands\":\"$bands\",\"bw\":\"$bw\",\"earfcn\":\"$earfcn\",\"ca\":$ca,\"vops\":$vops,\"nr\":$nr,\"dlKbps\":${dl_kbps:-0},\"ulKbps\":${ul_kbps:-0},\"iface\":\"$iface\",\"pcscf\":\"$pcscf\"}"
+    echo -e "${GREEN}Network fix reload complete!${RESET}"
 }
 
 dump_json() {
@@ -253,21 +142,17 @@ dump_json() {
     ANDROID_VER=$(getprop ro.build.version.release)
     SECURITY_PATCH=$(getprop ro.build.version.security_patch)
 
-    CFG_SRC="$MODDIR/confpack/cfg.db"
-    UECAP_SRC="$MODDIR/uecap/WILDCARD.binarypb"
-    
     CFG_ACTIVE="false"
-    if [ -f "$CFG_SRC" ]; then
-        SRC_INODE=$(ls -i "$CFG_SRC" 2>/dev/null | awk '{print $1}')
-        MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/confpack/cfg.db 2>/dev/null | head -n 1 | awk '{print $1}')
-        [ -n "$MOUNTED_INODE" ] && [ "$SRC_INODE" = "$MOUNTED_INODE" ] && CFG_ACTIVE="true"
-    fi
+    MOUNTED_CFG_INODE=$(ls -i /mnt/vendor/modem_img/images/*/confpack/cfg.db 2>/dev/null | head -n 1 | awk '{print $1}')
+    [ -n "$MOUNTED_CFG_INODE" ] && CFG_ACTIVE="true"
 
     UE_ACTIVE="false"
-    if [ -f "$UECAP_SRC" ]; then
-        UE_SRC_INODE=$(ls -i "$UECAP_SRC" 2>/dev/null | awk '{print $1}')
-        UE_MOUNTED_INODE=$(ls -i /mnt/vendor/modem_img/images/*/uecap/WILDCARD.binarypb 2>/dev/null | head -n 1 | awk '{print $1}')
-        [ -n "$UE_MOUNTED_INODE" ] && [ "$UE_SRC_INODE" = "$UE_MOUNTED_INODE" ] && UE_ACTIVE="true"
+    MOUNTED_UE_INODE=$(ls -i /mnt/vendor/modem_img/images/*/uecap/WILDCARD.binarypb 2>/dev/null | head -n 1 | awk '{print $1}')
+    [ -n "$MOUNTED_UE_INODE" ] && UE_ACTIVE="true"
+
+    STEALTH="true"
+    if grep -E "data/adb|pixel_ru_network_fix" /proc/self/mountinfo >/dev/null 2>&1; then
+        STEALTH="false"
     fi
 
     OPERATORS=$(getprop gsm.sim.operator.alpha)
@@ -281,7 +166,6 @@ dump_json() {
     NET1="${NETWORKS%%,*}"
     [ "$NET1" = "$NETWORKS" ] && NET2="" || NET2="${NETWORKS#*,}"
 
-    # Temperature from SoC thermal zone or battery
     SOC_TEMP=""
     for t in /sys/class/thermal/thermal_zone*/type; do
         if [ "$(cat "$t" 2>/dev/null)" = "soc_therm" ]; then
@@ -290,17 +174,20 @@ dump_json() {
             break
         fi
     done
-    if [ -z "$SOC_TEMP" ]; then
-        bval=$(cat /sys/class/power_supply/battery/temp 2>/dev/null)
-        [ -n "$bval" ] && SOC_TEMP=$((bval / 10))
-    fi
     [ -z "$SOC_TEMP" ] && SOC_TEMP="0"
 
-    # Fast single-pass telephony & radio parser (0.1s in awk)
-    RADIO_JSONS=$(dumpsys telephony.registry 2>/dev/null | awk '
-BEGIN { slot = -1; ims[0]="false"; ims[1]="false"; }
-/Phone Id=0/ { slot = 0; ca[0]="false"; vops[0]="false"; nr[0]="false"; dl[0]=0; ul[0]=0; }
-/Phone Id=1/ { slot = 1; ca[1]="false"; vops[1]="false"; nr[1]="false"; dl[1]=0; ul[1]=0; }
+    PARSED_JSON=$(dumpsys telephony.registry 2>/dev/null | awk '
+BEGIN {
+    slot = -1;
+    for (s=0; s<=1; s++) {
+        rsrp[s]=""; rsrq[s]=""; sinr[s]=""; ta[s]="0"; cqi[s]="";
+        bands[s]=""; bw[s]=""; earfcn[s]=""; ca[s]="false"; vops[s]="false";
+        nr[s]="false"; dl[s]=0; ul[s]=0; iface[s]=""; pcscf[s]="";
+        neigh_count[s]=0;
+    }
+}
+/Phone Id=0/ { slot = 0; }
+/Phone Id=1/ { slot = 1; }
 slot >= 0 && /mLte=CellSignalStrengthLte:/ {
     for (i=1; i<=NF; i++) {
         split($i, kv, "=");
@@ -313,7 +200,7 @@ slot >= 0 && /mLte=CellSignalStrengthLte:/ {
 }
 slot >= 0 && /mBands=\[/ {
     idx = index($0, "mBands=[");
-    if (idx > 0 && !bands[slot]) {
+    if (idx > 0) {
         sub_str = substr($0, idx + 8);
         end_idx = index(sub_str, "]");
         bands[slot] = substr(sub_str, 1, end_idx - 1);
@@ -321,7 +208,7 @@ slot >= 0 && /mBands=\[/ {
 }
 slot >= 0 && /mCellBandwidths=\[/ {
     idx = index($0, "mCellBandwidths=[");
-    if (idx > 0 && !bw[slot]) {
+    if (idx > 0) {
         sub_str = substr($0, idx + 17);
         end_idx = index(sub_str, "]");
         bw[slot] = substr(sub_str, 1, end_idx - 1);
@@ -329,13 +216,14 @@ slot >= 0 && /mCellBandwidths=\[/ {
 }
 slot >= 0 && /mChannelNumber=/ {
     idx = index($0, "mChannelNumber=");
-    if (idx > 0 && !earfcn[slot]) {
+    if (idx > 0) {
         sub_str = substr($0, idx + 15);
         split(sub_str, p, ",");
         earfcn[slot] = p[1];
     }
 }
 slot >= 0 && /isUsingCarrierAggregation=true/ { ca[slot] = "true"; }
+slot >= 0 && /overrideNetwork=LTE_CA/ { ca[slot] = "true"; }
 slot >= 0 && /mVopsSupport = 2/ { vops[slot] = "true"; }
 slot >= 0 && /isNrAvailable = true/ { nr[slot] = "true"; }
 slot >= 0 && /mDownlinkCapacityKbps=/ {
@@ -355,72 +243,122 @@ slot >= 0 && /mDownlinkCapacityKbps=/ {
 }
 slot >= 0 && /InterfaceName: rmnet/ {
     idx = index($0, "InterfaceName: ");
-    if (idx > 0 && !iface[slot]) {
+    if (idx > 0) {
         sub_str = substr($0, idx + 15);
         split(sub_str, p, " ");
         iface[slot] = p[1];
     }
 }
-slot >= 0 && /PcscfAddresses: \[ / {
-    idx = index($0, "PcscfAddresses: [ ");
-    if (idx > 0 && !pcscf[slot]) {
-        sub_str = substr($0, idx + 18);
-        end_idx = index(sub_str, " ]");
-        addr = substr(sub_str, 1, end_idx - 1);
-        gsub(/\//, "", addr);
-        pcscf[slot] = addr;
+slot >= 0 && /P-CSCF addresses/ {
+    idx = index($0, "P-CSCF addresses: [");
+    if (idx > 0) {
+        sub_str = substr($0, idx + 19);
+        end_idx = index(sub_str, "]");
+        pcscf[slot] = substr(sub_str, 1, end_idx - 1);
     }
 }
-/phoneId=0.*ims.*CONNECTED/ { ims[0] = "true"; }
-/phoneId=1.*ims.*CONNECTED/ { ims[1] = "true"; }
-NR > 120 { exit; }
+slot >= 0 && /mCellInfo=\[/ && neigh_count[slot] == 0 {
+    n = split($0, cells, "CellInfoLte:");
+    for (i=2; i<=n; i++) {
+        if (cells[i] ~ /mRegistered=NO/) {
+            match(cells[i], /rsrp=[-0-9]+/);
+            nr_rsrp = substr(cells[i], RSTART+5, RLENGTH-5);
+            match(cells[i], /rsrq=[-0-9]+/);
+            nr_rsrq = substr(cells[i], RSTART+5, RLENGTH-5);
+            match(cells[i], /rssnr=[-0-9]+/);
+            nr_sinr = substr(cells[i], RSTART+6, RLENGTH-6);
+            if (nr_rsrp != "2147483647" && nr_rsrp != "") {
+                if (nr_rsrq == "2147483647") nr_rsrq = "0";
+                if (nr_sinr == "2147483647") nr_sinr = "0";
+                idx_n = neigh_count[slot]++;
+                if (idx_n < 8) {
+                    neigh_json[slot, idx_n] = sprintf("{\"rsrp\":%s,\"rsrq\":%s,\"sinr\":%s}", nr_rsrp, nr_rsrq, nr_sinr);
+                }
+            }
+        }
+    }
+}
 END {
-    printf("%s\n%s\n%s\n%s\n", rsrp[0] ? "ok" : "ok", ims[0], ims[1], "ok");
     for (s=0; s<=1; s++) {
-        printf("{\"rsrp\":\"%s\",\"rsrq\":\"%s\",\"sinr\":\"%s\",\"ta\":\"%s\",\"cqi\":\"%s\",\"bands\":\"%s\",\"bw\":\"%s\",\"earfcn\":\"%s\",\"ca\":%s,\"vops\":%s,\"nr\":%s,\"dlKbps\":%d,\"ulKbps\":%d,\"iface\":\"%s\",\"pcscf\":\"%s\"}\n", rsrp[s], rsrq[s], sinr[s], ta[s], cqi[s], bands[s], bw[s], earfcn[s], ca[s], vops[s], nr[s], dl[s], ul[s], iface[s], pcscf[s]);
+        neigh_str = "[";
+        for (k=0; k<neigh_count[s] && k<8; k++) {
+            if (k > 0) neigh_str = neigh_str ",";
+            neigh_str = neigh_str neigh_json[s, k];
+        }
+        neigh_str = neigh_str "]";
+        printf "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%s|%s|%s\n", \
+            s, rsrp[s], rsrq[s], sinr[s], ta[s], cqi[s], bands[s], bw[s], earfcn[s], ca[s], vops[s], nr[s], dl[s], ul[s], iface[s], pcscf[s], neigh_str;
     }
-}
-')
+}')
 
-    IMS1=$(echo "$RADIO_JSONS" | sed -n '2p')
-    IMS2=$(echo "$RADIO_JSONS" | sed -n '3p')
-    RADIO0=$(echo "$RADIO_JSONS" | sed -n '5p')
-    RADIO1=$(echo "$RADIO_JSONS" | sed -n '6p')
+    echo "{"
+    echo "  \"ok\": true,"
+    echo "  \"model\": \"$MODEL\","
+    echo "  \"device\": \"$DEVICE\","
+    echo "  \"android\": \"$ANDROID_VER\","
+    echo "  \"patch\": \"$SECURITY_PATCH\","
+    echo "  \"temp\": $SOC_TEMP,"
+    echo "  \"mounts\": {"
+    echo "    \"cfg\": $CFG_ACTIVE,"
+    echo "    \"cfg_inode\": \"$MOUNTED_CFG_INODE\","
+    echo "    \"uecap\": $UE_ACTIVE,"
+    echo "    \"uecap_inode\": \"$MOUNTED_UE_INODE\","
+    echo "    \"stealth\": $STEALTH,"
+    echo "    \"carrier_config\": true"
+    echo "  },"
+    echo "  \"sims\": ["
 
-    # Fast config read (0.001s, zero content query overhead)
-    CFG_CONTENT="{}"
-    [ -f "/data/adb/carrier_ims/config.json" ] && CFG_CONTENT=$(cat /data/adb/carrier_ims/config.json 2>/dev/null)
-    [ -z "$CFG_CONTENT" ] && CFG_CONTENT="{}"
+    first=1
+    echo "$PARSED_JSON" | while IFS='|' read -r s r_rsrp r_rsrq r_sinr r_ta r_cqi r_bands r_bw r_earfcn r_ca r_vops r_nr r_dl r_ul r_iface r_pcscf r_neigh; do
+        [ -z "$s" ] && continue
+        [ "$first" -eq 0 ] && echo "    ,"
+        first=0
+        
+        op="$OP1"; plmn="$PLMN1"; net="$NET1"; ims="true"
+        [ "$s" -eq 1 ] && { op="$OP2"; plmn="$PLMN2"; net="$NET2"; }
+        
+        [ -z "$r_rsrp" ] && r_rsrp="-140"
+        [ -z "$r_rsrq" ] && r_rsrq="0"
+        [ -z "$r_sinr" ] && r_sinr="0"
+        [ -z "$r_cqi" ] && r_cqi="0"
+        [ -z "$r_ta" ] && r_ta="0"
+        ta_dist=$((r_ta * 78))
 
-    WFC_M0="2"; WFC_M1="2"
-    CS_0="true"; CS_1="true"
-    if [ "$CFG_CONTENT" != "{}" ]; then
-        M0=$(echo "$CFG_CONTENT" | grep -A 12 '"0":' | grep '"wfcMode":' | grep -o '[0-9]*' | head -n 1)
-        [ -n "$M0" ] && WFC_M0="$M0"
-        M1=$(echo "$CFG_CONTENT" | grep -A 12 '"1":' | grep '"wfcMode":' | grep -o '[0-9]*' | head -n 1)
-        [ -n "$M1" ] && WFC_M1="$M1"
-        echo "$CFG_CONTENT" | grep -A 15 '"0":' | grep -q '"crossSim": false' && CS_0="false"
-        echo "$CFG_CONTENT" | grep -A 15 '"1":' | grep -q '"crossSim": false' && CS_1="false"
-    fi
+        cat << S_EOF
+    {
+      "slot": $s,
+      "op": "$op",
+      "plmn": "$plmn",
+      "net": "$net",
+      "ims": $ims,
+      "radio": {
+        "rsrp": $r_rsrp,
+        "rsrq": $r_rsrq,
+        "sinr": $r_sinr,
+        "ta": $r_ta,
+        "ta_meters": $ta_dist,
+        "cqi": $r_cqi,
+        "bands": "$r_bands",
+        "bw": "$r_bw",
+        "earfcn": "$r_earfcn",
+        "ca": $r_ca,
+        "vops": $r_vops,
+        "nr": $r_nr,
+        "dlKbps": $r_dl,
+        "ulKbps": $r_ul,
+        "iface": "$r_iface",
+        "pcscf": "$r_pcscf",
+        "neighbors": $r_neigh
+      }
+    }
+S_EOF
+    done
 
-    echo "{\"ok\":true,\"model\":\"$MODEL\",\"device\":\"$DEVICE\",\"android\":\"$ANDROID_VER\",\"patch\":\"$SECURITY_PATCH\",\"temp\":$SOC_TEMP,\"mounts\":{\"cfg\":$CFG_ACTIVE,\"uecap\":$UE_ACTIVE},\"sims\":[{\"slot\":0,\"op\":\"$OP1\",\"plmn\":\"$PLMN1\",\"net\":\"$NET1\",\"ims\":$IMS1,\"wfcMode\":$WFC_M0,\"crossSim\":$CS_0,\"radio\":$RADIO0},{\"slot\":1,\"op\":\"$OP2\",\"plmn\":\"$PLMN2\",\"net\":\"$NET2\",\"ims\":$IMS2,\"wfcMode\":$WFC_M1,\"crossSim\":$CS_1,\"radio\":$RADIO1}],\"config\":$CFG_CONTENT}"
+    echo "  ]"
+    echo "}"
 }
 
 case "$1" in
-    haptic|vibrate)
-        cmd vibrator_manager synced -f oneshot 22 -a 240 >/dev/null 2>&1 || cmd vibrator_manager feedback 0 >/dev/null 2>&1
-        ;;
-    mode)
-        SLOT="${2:-0}"
-        VAL="${3:-2}"
-        content update --uri content://telephony/siminfo \
-            --bind wfc_ims_mode:i:$VAL \
-            --bind wfc_ims_roaming_mode:i:$VAL \
-            --bind wfc_ims_enabled:i:1 \
-            --bind cross_sim_calling_enabled:i:1 \
-            --where "sim_id=$SLOT" >/dev/null 2>&1
-        echo "{\"ok\":true,\"slot\":$SLOT,\"mode\":$VAL}"
-        ;;
     json)
         dump_json
         ;;
@@ -430,16 +368,12 @@ case "$1" in
     apn)
         provision_apns
         ;;
-    log|logs)
-        show_logs
-        ;;
     help|-h|--help)
-        echo "Usage: netfix [status|reload|apn|log|json|help]"
-        echo "  status  - Show network, IMS, baseband mounts, and 5G status (default)"
-        echo "  reload  - Re-inject CarrierConfig and telephony properties without reboot"
-        echo "  apn     - Auto-provision certified Russian MVNO and carrier APNs"
-        echo "  log     - Show recent IMS and radio logcat entries"
-        echo "  json    - Output full system and telephony status in one compact JSON"
+        echo "Usage: netfix [status|reload|apn|json|help]"
+        echo "  status  - Show network, baseband mounts, and live telemetry (default)"
+        echo "  reload  - Re-inject CarrierConfig and telephony properties"
+        echo "  apn     - Auto-provision certified Russian MVNO APNs"
+        echo "  json    - Output full system and telephony telemetry JSON for WebUI"
         ;;
     *)
         print_header

@@ -1,1499 +1,1044 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Pixel Network Fix</title>
-    <style>
-        :root {
-            --bg-color: #0f1013;
-            --surface-color: #1a1b20;
-            --surface-hover: #23252c;
-            --surface-variant: #131418;
-            --primary: #a8c7fa;
-            --primary-container: #0842a0;
-            --on-primary: #062e6f;
-            --text-color: #e3e2e6;
-            --text-muted: #8e9099;
-            --accent-green: #6dd58c;
-            --accent-blue: #7cacf8;
-            --accent-yellow: #fdd663;
-            --accent-red: #f28b82;
-            --radius-sm: 10px;
-            --radius-md: 16px;
-            --radius-lg: 22px;
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pixel Telemetry & Network Monitor</title>
+  <style>
+    :root {
+      --bg: #070a12;
+      --card-bg: #0d1527;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #a855f7;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --radius: 14px;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 14px;
-            padding-bottom: 40px;
-        }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 16px 14px 40px;
+      overflow-x: hidden;
+    }
 
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            padding: 4px 2px;
-        }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-        .title-area h1 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: -0.3px;
-        }
+    /* Header */
+    .header-card {
+      background: linear-gradient(135deg, #0f1c3f 0%, #0d1527 100%);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
 
-        .title-area p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
 
-        .badge-active {
-            background: rgba(109, 213, 140, 0.15);
-            color: var(--accent-green);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            border: 1px solid rgba(109, 213, 140, 0.3);
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
 
-        .badge-active::before {
-            content: "";
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green);
-        }
+    .pulse-dot {
+      width: 9px;
+      height: 9px;
+      background: var(--accent-emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse 1.8s infinite;
+    }
 
-        .grid {
-            display: grid;
-            gap: 12px;
-        }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
 
-        .card {
-            background: var(--surface-color);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
+    .device-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
 
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
+    .header-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
 
-        .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+    }
 
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: var(--transition);
-        }
+    .badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
 
-        .pill-success {
-            background: rgba(109, 213, 140, 0.18);
-            color: var(--accent-green);
-            border: 1px solid rgba(109, 213, 140, 0.35);
-        }
+    .badge.btn-refresh {
+      cursor: pointer;
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: var(--accent-blue);
+      user-select: none;
+    }
 
-        .pill-warn {
-            background: rgba(253, 214, 99, 0.18);
-            color: var(--accent-yellow);
-            border: 1px solid rgba(253, 214, 99, 0.35);
-        }
+    .badge.btn-refresh:active {
+      transform: scale(0.96);
+    }
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 13px;
-        }
+    /* Section Card */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
 
-        .info-row:last-child {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        .info-label {
-            color: var(--text-muted);
-        }
+    /* Integrity grid */
+    .integrity-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-        .info-val {
-            font-weight: 500;
-            color: #fff;
-            text-align: right;
-            max-width: 65%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+    .integrity-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
 
-        .toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            cursor: pointer;
-        }
+    .integrity-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
 
-        .toggle-row:last-child {
-            border-bottom: none;
-        }
+    .integrity-value {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-        .toggle-desc h4 {
-            font-size: 13.5px;
-            font-weight: 500;
-            color: #fff;
-        }
+    .status-ok { color: var(--accent-emerald); }
+    .status-warn { color: var(--accent-amber); }
+    .status-err { color: var(--accent-rose); }
 
-        .toggle-desc p {
-            font-size: 11.5px;
-            color: var(--text-muted);
-            margin-top: 1px;
-        }
+    /* SIM Tabs */
+    .sim-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
 
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-            flex-shrink: 0;
-        }
+    .sim-tab {
+      flex: 1;
+      padding: 10px 12px;
+      text-align: center;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+    .sim-tab.active {
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
 
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #353740;
-            transition: var(--transition);
-            border-radius: 34px;
-        }
+    /* CA Banner */
+    .ca-banner {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: var(--transition);
-            border-radius: 50%;
-        }
+    .ca-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
 
-        input:checked + .slider {
-            background-color: var(--primary);
-        }
+    .ca-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #c084fc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-        input:checked + .slider:before {
-            transform: translateX(20px);
-            background-color: var(--on-primary);
-        }
+    .ca-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(168, 85, 247, 0.25);
+      color: #f3e8ff;
+    }
 
-        .btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 8px;
-        }
+    .ca-blocks {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
 
-        .btn {
-            background: var(--surface-color);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-md);
-            padding: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: var(--transition);
-        }
+    .ca-block {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 11px;
+    }
 
-        .btn:active {
-            transform: scale(0.97);
-            background: var(--surface-hover);
-        }
+    .ca-block.pcc {
+      border-color: rgba(6, 182, 212, 0.5);
+      background: rgba(6, 182, 212, 0.1);
+    }
 
-        .btn-primary {
-            background: var(--primary);
-            color: var(--on-primary);
-            grid-column: span 2;
-            padding: 14px;
-            font-size: 14px;
-            box-shadow: 0 4px 16px rgba(168, 199, 250, 0.25);
-        }
+    .ca-block strong {
+      color: #fff;
+    }
 
-        .btn-primary:active {
-            background: #90b5f5;
-        }
+    /* Metric Gauges */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
 
-        .tab-bar {
-            display: flex;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: var(--radius-sm);
-            padding: 3px;
-            margin-bottom: 8px;
-        }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
 
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-muted);
-            border-radius: 7px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
+    .metric-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
 
-        .tab.active {
-            background: var(--surface-hover);
-            color: #fff;
-            font-weight: 600;
-        }
+    .metric-val {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
 
-        .terminal-box {
-            background: #0a0b0d;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 12px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 11px;
-            color: #a6adbb;
-            line-height: 1.5;
-            max-height: 280px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-            user-select: text;
-        }
+    .metric-unit {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
 
-        .toolbar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
+    .metric-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
 
-        .search-input {
-            flex: 1;
-            background: var(--surface-hover);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-sm);
-            padding: 6px 10px;
-            font-size: 11px;
-            color: #fff;
-            outline: none;
-        }
+    .signal-bar-wrap {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
 
-        .search-input:focus {
-            border-color: var(--primary);
-        }
+    .signal-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s ease, background 0.4s ease;
+    }
 
-        .toolbar-btn {
-            background: var(--surface-hover);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text-color);
-            padding: 6px 12px;
-            border-radius: var(--radius-sm);
-            font-size: 11px;
-            font-weight: 500;
-            cursor: pointer;
-        }
+    /* Detail Table */
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4px;
+    }
 
-        .toolbar-btn:active {
-            background: #333642;
-        }
+    .detail-table tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
 
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #252730;
-            color: #fff;
-            padding: 10px 18px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 500;
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
-            transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            pointer-events: none;
-        }
+    .detail-table tr:last-child {
+      border-bottom: none;
+    }
 
-        #toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
+    .detail-table td {
+      padding: 9px 4px;
+      font-size: 12px;
+    }
 
-        /* Live Indicator & Pulse */
-        @keyframes pulseGlow {
-            0% { transform: scale(0.95); opacity: 0.7; }
-            50% { transform: scale(1.15); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.7; }
-        }
-        .live-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #34d399;
-            display: inline-block;
-            box-shadow: 0 0 8px #34d399;
-            animation: pulseGlow 2s infinite ease-in-out;
-        }
-        .live-dot.paused {
-            background: #9ca3af;
-            box-shadow: none;
-            animation: none;
-        }
+    .detail-table td:first-child {
+      color: var(--text-muted);
+      width: 48%;
+    }
 
-        /* Radio Telemetry Card Styles */
-        .radio-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 14px;
-            padding: 12px;
-            margin-top: 10px;
-        }
-        .sim-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .signal-meter {
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 6px;
-            height: 6px;
-            overflow: hidden;
-            margin: 6px 0 10px 0;
-            position: relative;
-        }
-        .signal-meter-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.4s ease, background-color 0.4s ease;
-        }
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-        .metric-box {
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 8px;
-            text-align: center;
-        }
-        .metric-label {
-            font-size: 9.5px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 3px;
-        }
-        .metric-val {
-            font-size: 13px;
-            font-weight: 700;
-            font-family: ui-monospace, SFMono-Regular, monospace;
-        }
-        .pill-ca {
-            background: rgba(56, 189, 248, 0.15);
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 2px 7px;
-            border-radius: 10px;
-            font-size: 10.5px;
-            font-weight: 600;
-        }
-        .collapsible-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0 2px 0;
-            cursor: pointer;
-            font-size: 11.5px;
-            color: var(--text-muted);
-            user-select: none;
-            font-weight: 500;
-            transition: color 0.15s ease;
-        }
-        .collapsible-header:hover {
-            color: var(--primary);
-        }
-        .collapsible-content {
-            display: none;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.08);
-        }
-        .collapsible-content.open {
-            display: block;
-        }
+    .detail-table td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: #fff;
+    }
 
-        /* Segmented Mode Selector Styles */
-        .setting-block {
-            padding: 12px 0 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        }
-        .setting-title-row h4 {
-            font-size: 13.5px;
-            font-weight: 500;
-            color: #fff;
-        }
-        .setting-title-row p {
-            font-size: 11.5px;
-            color: var(--text-muted);
-            margin: 2px 0 8px 0;
-            line-height: 1.4;
-        }
-        .segmented-control {
-            display: flex;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: var(--radius-sm);
-            padding: 3px;
-            gap: 4px;
-        }
-        .seg-btn {
-            flex: 1;
-            border: 1px solid transparent;
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 11.5px;
-            font-weight: 600;
-            padding: 8px 4px;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-align: center;
-        }
-        .seg-btn:active {
-            transform: scale(0.97);
-        }
-        .seg-btn.active {
-            background: var(--surface-hover);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-        .seg-btn.danger.active {
-            background: rgba(244, 63, 94, 0.2);
-            color: #fb7185;
-            border-color: rgba(244, 63, 94, 0.35);
-        }
-    </style>
+    /* Real-time Canvas Graph */
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .chart-stats {
+      font-size: 11px;
+      color: var(--accent-blue);
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.08);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    canvas {
+      width: 100%;
+      height: 140px;
+      display: block;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Neighbor Cells */
+    .neighbor-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .neighbor-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .neighbor-id {
+      font-weight: 700;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .neighbor-metrics {
+      display: flex;
+      gap: 12px;
+      font-weight: 600;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
-    <header>
-        <div class="title-area">
-            <h1>📡 Pixel Network Fix</h1>
-            <p id="device-subtitle">Google Pixel • Shannon Baseband</p>
+  <div class="container">
+    <!-- Header -->
+    <div class="header-card">
+      <div class="header-top">
+        <div class="brand-title">
+          <div class="pulse-dot"></div>
+          <span>Pixel Radio Telemetry</span>
         </div>
-        <div class="badge-active" id="badge-status">v1.4 Turbo Active</div>
-    </header>
-
-    <div class="grid">
-        <!-- Live Status Card -->
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title">📶 Статус мобильной сети</span>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    <span class="status-pill" id="soc-temp-pill" style="background: rgba(251, 146, 60, 0.15); color: #fb923c; border: 1px solid rgba(251, 146, 60, 0.3);">🌡️ --°C</span>
-                    <span class="status-pill pill-success" id="live-indicator"><span class="live-dot" id="live-dot"></span> <span id="live-text">Live 5s</span></span>
-                </div>
-            </div>
-
-            <!-- SIM 1 Container -->
-            <div class="radio-card" id="sim0-card">
-                <div class="sim-title-row">
-                    <div>
-                        <strong id="sim0-title" style="font-size: 13px;">SIM 1: Загрузка...</strong>
-                        <div id="sim0-plmn" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">PLMN: -- • Сеть: --</div>
-                    </div>
-                    <span class="status-pill pill-success" id="sim0-badge">VoLTE OK</span>
-                </div>
-
-                <div class="signal-meter">
-                    <div class="signal-meter-fill" id="sim0-meter-fill" style="width: 50%; background: var(--accent-green);"></div>
-                </div>
-
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <div class="metric-label">RSRP (Уровень)</div>
-                        <div class="metric-val" id="sim0-rsrp">-- dBm</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">RSRQ (Качество)</div>
-                        <div class="metric-val" id="sim0-rsrq">-- dB</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">SINR (Шум)</div>
-                        <div class="metric-val" id="sim0-sinr">-- dB</div>
-                    </div>
-                </div>
-
-                <div class="info-row">
-                    <span class="info-label">Диапазон (Band):</span>
-                    <span class="info-val" id="sim0-band">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Агрегация частот:</span>
-                    <span class="info-val" id="sim0-ca">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">VoPS (VoLTE Core):</span>
-                    <span class="info-val" id="sim0-vops">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">5G NSA Сота:</span>
-                    <span class="info-val" id="sim0-nr">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Приоритет вызовов:</span>
-                    <span class="info-val" id="sim0-wfcmode">--</span>
-                </div>
-
-                <div class="collapsible-header" onclick="toggleDetails('sim0-details', this)">
-                    <span>🔍 Инженерные детали соты</span>
-                    <span class="arrow">▼</span>
-                </div>
-                <div class="collapsible-content" id="sim0-details">
-                    <div class="info-row">
-                        <span class="info-label">Канал (EARFCN):</span>
-                        <span class="info-val" id="sim0-earfcn">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Скорость радиоканала:</span>
-                        <span class="info-val" id="sim0-speed">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Дистанция (TA):</span>
-                        <span class="info-val" id="sim0-ta">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Качество CQI:</span>
-                        <span class="info-val" id="sim0-cqi">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Интерфейс модема:</span>
-                        <span class="info-val" id="sim0-iface">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Серверы P-CSCF:</span>
-                        <span class="info-val" id="sim0-pcscf" style="font-size:10.5px; word-break:break-all;">--</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SIM 2 Container -->
-            <div class="radio-card" id="sim1-card" style="display: none; margin-top: 10px;">
-                <div class="sim-title-row">
-                    <div>
-                        <strong id="sim1-title" style="font-size: 13px;">SIM 2: Загрузка...</strong>
-                        <div id="sim1-plmn" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">PLMN: -- • Сеть: --</div>
-                    </div>
-                    <span class="status-pill pill-success" id="sim1-badge">VoLTE OK</span>
-                </div>
-
-                <div class="signal-meter">
-                    <div class="signal-meter-fill" id="sim1-meter-fill" style="width: 50%; background: var(--accent-green);"></div>
-                </div>
-
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <div class="metric-label">RSRP (Уровень)</div>
-                        <div class="metric-val" id="sim1-rsrp">-- dBm</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">RSRQ (Качество)</div>
-                        <div class="metric-val" id="sim1-rsrq">-- dB</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">SINR (Шум)</div>
-                        <div class="metric-val" id="sim1-sinr">-- dB</div>
-                    </div>
-                </div>
-
-                <div class="info-row">
-                    <span class="info-label">Диапазон (Band):</span>
-                    <span class="info-val" id="sim1-band">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Агрегация частот:</span>
-                    <span class="info-val" id="sim1-ca">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">VoPS (VoLTE Core):</span>
-                    <span class="info-val" id="sim1-vops">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">5G NSA Сота:</span>
-                    <span class="info-val" id="sim1-nr">--</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Приоритет вызовов:</span>
-                    <span class="info-val" id="sim1-wfcmode">--</span>
-                </div>
-
-                <div class="collapsible-header" onclick="toggleDetails('sim1-details', this)">
-                    <span>🔍 Инженерные детали соты</span>
-                    <span class="arrow">▼</span>
-                </div>
-                <div class="collapsible-content" id="sim1-details">
-                    <div class="info-row">
-                        <span class="info-label">Канал (EARFCN):</span>
-                        <span class="info-val" id="sim1-earfcn">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Скорость радиоканала:</span>
-                        <span class="info-val" id="sim1-speed">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Дистанция (TA):</span>
-                        <span class="info-val" id="sim1-ta">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Качество CQI:</span>
-                        <span class="info-val" id="sim1-cqi">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Интерфейс модема:</span>
-                        <span class="info-val" id="sim1-iface">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Серверы P-CSCF:</span>
-                        <span class="info-val" id="sim1-pcscf" style="font-size:10.5px; word-break:break-all;">--</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-row" style="margin-top: 12px;">
-                <span class="info-label">Модем Shannon SER:</span>
-                <span class="info-val" id="baseband-status">cfg.db & uecap OK</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Слушатель Hot-Swap:</span>
-                <span class="info-val" style="color: var(--accent-green);">Активен (0% CPU)</span>
-            </div>
+        <div class="badge btn-refresh" id="btnRefresh" onclick="manualRefresh()">
+          <span>⟳ Обновить</span>
         </div>
-
-        <!-- Action Execution Live Console -->
-        <div class="card" id="exec-card" style="display: none;">
-            <div class="card-header">
-                <span class="card-title" id="exec-title">⚡ Выполнение команды...</span>
-                <span class="status-pill pill-warn" id="exec-status">В процессе</span>
-            </div>
-            <div class="terminal-box" id="exec-output"></div>
-        </div>
-
-        <!-- Configuration Toggles -->
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title">⚙️ Настройки IMS и Сети</span>
-            </div>
-            
-            <div class="tab-bar">
-                <div class="tab active" onclick="switchSlotTab(0)">SIM 1</div>
-                <div class="tab" onclick="switchSlotTab(1)">SIM 2</div>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-volte')">
-                <div class="toggle-desc">
-                    <h4>Голос через LTE (VoLTE)</h4>
-                    <p>HD-качество звонков и быстрый дозвон</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-volte" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-vowifi')">
-                <div class="toggle-desc">
-                    <h4>Звонки по Wi-Fi (VoWiFi)</h4>
-                    <p>Связь там, где нет сотового сигнала</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-vowifi" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <!-- Calling Priority & Cross-SIM Mode -->
-            <div class="setting-block">
-                <div class="setting-title-row">
-                    <div>
-                        <h4>Приоритет вызовов (Режим VoWiFi / Cross-SIM)</h4>
-                        <p id="wfc-mode-desc">Выберите режим маршрутизации голосовых вызовов</p>
-                    </div>
-                </div>
-                <div class="segmented-control" id="wfc-mode-selector">
-                    <button type="button" class="seg-btn" data-mode="1" onclick="selectWfcMode(1)">📶 Сотовая</button>
-                    <button type="button" class="seg-btn active" data-mode="2" onclick="selectWfcMode(2)">⚡ Авто (Wi-Fi)</button>
-                    <button type="button" class="seg-btn danger" data-mode="0" onclick="selectWfcMode(0)">🌐 Только Интернет</button>
-                </div>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-fivegnr')">
-                <div class="toggle-desc">
-                    <h4>5G NR & VoNR (SA/NSA)</h4>
-                    <p>Диапазоны n78, n79 на полной мощности</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-fivegnr" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-vt')">
-                <div class="toggle-desc">
-                    <h4>Видеовызовы ViLTE</h4>
-                    <p>Аппаратная передача видео по LTE</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-vt" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-ut')">
-                <div class="toggle-desc">
-                    <h4>Услуги связи через Ut/XCAP</h4>
-                    <p>Переадресация и удержание вызова через интернет</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-ut" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-rcs')">
-                <div class="toggle-desc">
-                    <h4>Google Messages RCS (Jibe)</h4>
-                    <p>Прямое подключение чата Google в обход оператора</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-rcs" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="toggle-row" onclick="toggleInput('cfg-crossSim')">
-                <div class="toggle-desc">
-                    <h4>Cross-SIM Calling</h4>
-                    <p>Резервные звонки со 2-й SIM через данные 1-й</p>
-                </div>
-                <label class="switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="cfg-crossSim" checked onchange="onToggleChange()">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="btn-group">
-            <button class="btn btn-primary" id="btn-reload" onclick="applySettings()">⚡ Переприменить настройки сейчас</button>
-            <button class="btn" id="btn-force-cross-sim" style="grid-column: span 2; border-color: rgba(244, 63, 94, 0.35); background: rgba(244, 63, 94, 0.12); color: #fb7185;" onclick="forceCrossSimToggle()">🌐 Форсировать звонки SIM 2 через интернет (Cross-SIM)</button>
-            <button class="btn" onclick="provisionAPNs()">🌐 Восстановить APN</button>
-            <button class="btn" onclick="toggleLogs()">📋 Логи связи</button>
-            <button class="btn" style="grid-column: span 2;" onclick="testHaptic()">📳 Проверить виброотклик (Haptic Test)</button>
-        </div>
-
-        <!-- Diagnostics Log Drawer -->
-        <div class="card" id="log-card" style="display: none;">
-            <div class="card-header">
-                <span class="card-title">📜 Логи модема & IMS</span>
-            </div>
-            <div class="toolbar">
-                <input type="text" class="search-input" id="log-filter" placeholder="🔍 Фильтр (напр: ims, volte)..." oninput="filterLogs()">
-                <button class="toolbar-btn" onclick="refreshLogs()">🔄</button>
-                <button class="toolbar-btn" onclick="copyLogs()">📋</button>
-            </div>
-            <div class="terminal-box" id="log-content">Загрузка радиологов...</div>
-        </div>
+      </div>
+      <div class="device-sub" id="deviceSub">
+        Google Pixel 8 Pro (husky) • Tensor G3 • Shannon G5300i
+      </div>
+      <div class="header-badges">
+        <div class="badge active" id="badgeAndroid">Android 17</div>
+        <div class="badge active" id="badgeTemp">🌡️ --°C</div>
+        <div class="badge active" id="badgeAuto">⚡ Живой поток (1.5с)</div>
+      </div>
     </div>
 
-    <div id="toast">Настройки применены!</div>
+    <!-- Mounts & Integrity -->
+    <div class="card">
+      <div class="card-title">
+        <span>Статус монтирования и ядра</span>
+        <span class="badge active" id="badgeIntegrity">Все службы OK</span>
+      </div>
+      <div class="integrity-grid">
+        <div class="integrity-item">
+          <div class="integrity-label">Модем Baseband (cfg.db)</div>
+          <div class="integrity-value" id="valCfg"><span class="status-ok">●</span> Смонтирован (SER)</div>
+        </div>
+        <div class="integrity-item">
+          <div class="integrity-label">UE Capabilities (5G/CA)</div>
+          <div class="integrity-value" id="valUecap"><span class="status-ok">●</span> Смонтирован (Wildcard)</div>
+        </div>
+        <div class="integrity-item">
+          <div class="integrity-label">Стелс-режим (Mir Pay)</div>
+          <div class="integrity-value" id="valStealth"><span class="status-ok">●</span> Защищен (Clean mount)</div>
+        </div>
+        <div class="integrity-item">
+          <div class="integrity-label">CarrierConfig Binder</div>
+          <div class="integrity-value" id="valBinder"><span class="status-ok">●</span> Внедрен (Applier)</div>
+        </div>
+      </div>
+    </div>
 
-    <script>
-        // Non-blocking Web API Haptic feedback (0ms latency, zero root fork)
-        function haptic() {
-            try { 
-                if (navigator.vibrate) navigator.vibrate(10); 
-            } catch (e) {}
+    <!-- SIM Selector Tabs -->
+    <div class="sim-tabs">
+      <div class="sim-tab active" id="tabSim0" onclick="selectSim(0)">
+        <span>SIM 1: <strong id="tabSim0Name">MegaFon</strong></span>
+      </div>
+      <div class="sim-tab" id="tabSim1" onclick="selectSim(1)">
+        <span>SIM 2: <strong id="tabSim1Name">beeline</strong></span>
+      </div>
+    </div>
+
+    <!-- Carrier Aggregation Banner -->
+    <div class="ca-banner" id="caBanner">
+      <div class="ca-header">
+        <div class="ca-title">
+          <span>⚡</span>
+          <span id="caTitleText">Агрегация несущих (CA)</span>
+        </div>
+        <div class="ca-badge" id="caBadge">АКТИВНА</div>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted);" id="caDesc">
+        Суммарный агрегированный спектр: <strong style="color: #fff;" id="caTotalBw">30 MHz</strong>
+      </div>
+      <div class="ca-blocks" id="caBlocks">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Real-time Chart (RSRP) -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="card-title" style="margin-bottom:0;">Уровень сигнала RSRP во времени</div>
+        <div class="chart-stats" id="chartStatsRsrp">Текущий: -94 dBm</div>
+      </div>
+      <canvas id="rsrpChart" width="560" height="140"></canvas>
+    </div>
+
+    <!-- Real-time Chart (SINR) -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="card-title" style="margin-bottom:0;">Помехоустойчивость SINR (Качество)</div>
+        <div class="chart-stats" id="chartStatsSinr" style="color: var(--accent-cyan); border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.08);">Текущий: +6 dB</div>
+      </div>
+      <canvas id="sinrChart" width="560" height="140"></canvas>
+    </div>
+
+    <!-- Primary Radio Metrics -->
+    <div class="card">
+      <div class="card-title">Параметры радиоканала базовой станции</div>
+      <div class="metric-grid">
+        <!-- RSRP -->
+        <div class="metric-card">
+          <div class="metric-title">Мощность сигнала (RSRP)</div>
+          <div class="metric-val" id="valRsrp" style="color: var(--accent-emerald);">-94 <span class="metric-unit">dBm</span></div>
+          <div class="signal-bar-wrap">
+            <div class="signal-bar-fill" id="barRsrp" style="width: 75%; background: var(--accent-emerald);"></div>
+          </div>
+          <div class="metric-sub" id="qualRsrp">Хороший приём</div>
+        </div>
+
+        <!-- SINR -->
+        <div class="metric-card">
+          <div class="metric-title">Отношение сигнал/шум (SINR)</div>
+          <div class="metric-val" id="valSinr" style="color: var(--accent-cyan);">+6 <span class="metric-unit">dB</span></div>
+          <div class="signal-bar-wrap">
+            <div class="signal-bar-fill" id="barSinr" style="width: 60%; background: var(--accent-cyan);"></div>
+          </div>
+          <div class="metric-sub" id="qualSinr">Стабильный канал</div>
+        </div>
+
+        <!-- RSRQ -->
+        <div class="metric-card">
+          <div class="metric-title">Качество приёма (RSRQ)</div>
+          <div class="metric-val" id="valRsrq">-12 <span class="metric-unit">dB</span></div>
+          <div class="signal-bar-wrap">
+            <div class="signal-bar-fill" id="barRsrq" style="width: 70%; background: #94a3b8;"></div>
+          </div>
+          <div class="metric-sub">Диапазон: -3 .. -20 dB</div>
+        </div>
+
+        <!-- CQI -->
+        <div class="metric-card">
+          <div class="metric-title">Индекс качества (CQI)</div>
+          <div class="metric-val" id="valCqi" style="color: var(--accent-purple);">8 <span class="metric-unit">/ 15</span></div>
+          <div class="signal-bar-wrap">
+            <div class="signal-bar-fill" id="barCqi" style="width: 53%; background: var(--accent-purple);"></div>
+          </div>
+          <div class="metric-sub" id="qualCqi">Модуляция 64-QAM</div>
+        </div>
+      </div>
+
+      <!-- Detailed Cellular Table -->
+      <table class="detail-table">
+        <tbody>
+          <tr>
+            <td>Оператор и PLMN</td>
+            <td id="tblOp">MegaFon pre-5G (25002)</td>
+          </tr>
+          <tr>
+            <td>Технология (RAT)</td>
+            <td id="tblRat">LTE Advanced</td>
+          </tr>
+          <tr>
+            <td>Несущий диапазон (Band)</td>
+            <td id="tblBand">Band 3 (FDD 1800 MHz)</td>
+          </tr>
+          <tr>
+            <td>Канал EARFCN / Частота DL</td>
+            <td id="tblFreq">1596 (1844.6 MHz)</td>
+          </tr>
+          <tr>
+            <td>Дистанция до БС (Timing Advance)</td>
+            <td id="tblTa">TA = 5 (~390 метров)</td>
+          </tr>
+          <tr>
+            <td>Ширина первичного канала</td>
+            <td id="tblBw">10 MHz</td>
+          </tr>
+          <tr>
+            <td>Поддержка VoPS (Голос в LTE)</td>
+            <td id="tblVops">Поддерживается (VoLTE)</td>
+          </tr>
+          <tr>
+            <td>Сервисы IMS</td>
+            <td id="tblIms">VoLTE & VoWiFi Registered</td>
+          </tr>
+          <tr>
+            <td>Сетевой интерфейс</td>
+            <td id="tblIface">rmnet1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Neighbor Cells -->
+    <div class="card">
+      <div class="card-title">
+        <span>Обнаруженные соседние вышки (БС)</span>
+        <span class="badge" id="badgeNeighCount">0 обнаружено</span>
+      </div>
+      <div class="neighbor-list" id="neighborList">
+        <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px;">
+          Сканирование соседних сот...
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Pixel 8 Pro Russian Networks & Baseband Monitor • SilentNode-dev
+    </div>
+  </div>
+
+  <script>
+    let currentSim = 0;
+    let latestData = null;
+    let isFetching = false;
+    let autoRefreshTimer = null;
+
+    // Rolling chart history (last 40 samples)
+    const MAX_POINTS = 40;
+    const chartHistory = {
+      0: { rsrp: [], sinr: [] },
+      1: { rsrp: [], sinr: [] }
+    };
+
+    function execCommand(cmd) {
+      return new Promise((resolve) => {
+        try {
+          if (window.ksu && typeof window.ksu.exec === 'function') {
+            resolve(window.ksu.exec(cmd));
+            return;
+          }
+          if (typeof window.ksuExec === 'function') {
+            resolve(window.ksuExec(cmd));
+            return;
+          }
+        } catch (e) {
+          console.error("ksu error", e);
         }
+        // Fallback for mock preview
+        resolve(null);
+      });
+    }
 
-        // Official KernelSU JavaScript Bridge
-        let callbackCounter = 0;
-        function getUniqueCallbackName(prefix) {
-            return `${prefix}_cb_${Date.now()}_${callbackCounter++}`;
+    // Band & Frequency calculator
+    function getBandDetails(bandNum, earfcn) {
+      let b = parseInt(bandNum);
+      const e = parseInt(earfcn) || 0;
+
+      // Auto-deduce Band from EARFCN if bandNum is not explicitly provided
+      if (isNaN(b) || b <= 0) {
+        if (e >= 0 && e <= 599) b = 1;
+        else if (e >= 600 && e <= 1199) b = 2;
+        else if (e >= 1200 && e <= 1949) b = 3;
+        else if (e >= 1950 && e <= 2399) b = 4;
+        else if (e >= 2400 && e <= 2649) b = 5;
+        else if (e >= 2750 && e <= 3449) b = 7;
+        else if (e >= 3450 && e <= 3799) b = 8;
+        else if (e >= 6150 && e <= 6449) b = 20;
+        else if (e >= 37750 && e <= 38249) b = 38;
+        else if (e >= 38650 && e <= 39649) b = 40;
+        else if (e >= 39650 && e <= 41589) b = 41;
+        else if (e >= 620000 && e <= 653333) b = 78;
+        else if (e >= 693333 && e <= 733333) b = 79;
+      }
+
+      let name = b ? `Band ${b}` : `EARFCN ${e}`;
+      let freq = "-- MHz";
+
+      if (b === 1) {
+        name = "Band 1 (FDD 2100 MHz)";
+        if (e >= 0 && e <= 599) freq = (2110 + 0.1 * e).toFixed(1) + " MHz";
+      } else if (b === 3) {
+        name = "Band 3 (FDD 1800 MHz)";
+        if (e >= 1200 && e <= 1949) freq = (1805 + 0.1 * (e - 1200)).toFixed(1) + " MHz";
+      } else if (b === 7) {
+        name = "Band 7 (FDD 2600 MHz)";
+        if (e >= 2750 && e <= 3449) freq = (2620 + 0.1 * (e - 2750)).toFixed(1) + " MHz";
+      } else if (b === 8) {
+        name = "Band 8 (FDD 900 MHz)";
+        if (e >= 3450 && e <= 3799) freq = (925 + 0.1 * (e - 3450)).toFixed(1) + " MHz";
+      } else if (b === 20) {
+        name = "Band 20 (FDD 800 MHz)";
+        if (e >= 6150 && e <= 6449) freq = (791 + 0.1 * (e - 6150)).toFixed(1) + " MHz";
+      } else if (b === 38) {
+        name = "Band 38 (TDD 2600 MHz)";
+        if (e >= 37750 && e <= 38249) freq = (2570 + 0.1 * (e - 37750)).toFixed(1) + " MHz";
+      } else if (b === 40) {
+        name = "Band 40 (TDD 2300 MHz)";
+        if (e >= 38650 && e <= 39649) freq = (2300 + 0.1 * (e - 38650)).toFixed(1) + " MHz";
+      } else if (b === 78) {
+        name = "Band n78 (TDD 3500 5G)";
+        freq = "3500 MHz (5G NR)";
+      } else if (b === 79) {
+        name = "Band n79 (TDD 4700 5G)";
+        freq = "4700 MHz (5G NR)";
+      }
+      return { name, freq };
+    }
+
+    function selectSim(slot) {
+      currentSim = slot;
+      document.getElementById('tabSim0').classList.toggle('active', slot === 0);
+      document.getElementById('tabSim1').classList.toggle('active', slot === 1);
+      if (latestData) {
+        renderSimData(latestData);
+        drawCharts();
+      }
+    }
+
+    async function fetchTelemetry() {
+      if (isFetching) return;
+      isFetching = true;
+
+      try {
+        const raw = await execCommand("netfix json");
+        if (raw) {
+          try {
+            const data = JSON.parse(raw);
+            if (data && data.ok) {
+              latestData = data;
+              updateHistory(data);
+              renderGlobalData(data);
+              renderSimData(data);
+              drawCharts();
+            }
+          } catch (e) {
+            console.error("JSON parse error", e, raw);
+          }
         }
-
-        function ksuExec(command, options) {
-            if (typeof options === "undefined") options = {};
-            return new Promise((resolve) => {
-                if (typeof window.ksu === "undefined" || !window.ksu.exec) {
-                    resolve({ errno: -1, stdout: "", stderr: "KernelSU bridge not detected" });
-                    return;
-                }
-                const cbName = getUniqueCallbackName("exec");
-                window[cbName] = (errno, stdout, stderr) => {
-                    resolve({ errno, stdout: stdout || "", stderr: stderr || "" });
-                    delete window[cbName];
-                };
-                try {
-                    window.ksu.exec(command, JSON.stringify(options), cbName);
-                } catch (error) {
-                    delete window[cbName];
-                    resolve({ errno: -1, stdout: "", stderr: error.toString() });
-                }
-            });
-        }
-
-        function ksuToast(msg) {
-            if (typeof window.ksu !== "undefined" && window.ksu.toast) {
-                try { window.ksu.toast(msg); return; } catch (e) {}
-            }
-            const toast = document.getElementById("toast");
-            toast.textContent = msg;
-            toast.classList.add("show");
-            setTimeout(() => toast.classList.remove("show"), 2500);
-        }
-
-        let currentSlot = 0;
-        let configData = {
-            slots: {
-                "0": { volte: true, vowifi: true, vt: true, ut: true, fiveGnr: true, vonr: true, crossSim: true, rcs: true },
-                "1": { volte: true, vowifi: true, vt: true, ut: true, fiveGnr: true, vonr: true, crossSim: true, rcs: true }
-            }
-        };
-        let rawLogText = "";
-        let saveDebounceTimer = null;
-
-        function formatBand(bands, bw) {
-            if (!bands || bands.trim() === "") return "LTE / Auto";
-            const bandMap = {
-                "1": "Band 1 (2100 MHz)",
-                "3": "Band 3 (1800 MHz)",
-                "7": "Band 7 (2600 MHz)",
-                "8": "Band 8 (900 MHz)",
-                "20": "Band 20 (800 MHz)",
-                "38": "Band 38 (2600 TDD)",
-                "40": "Band 40 (2300 TDD)",
-                "77": "n77 (3700 MHz)",
-                "78": "n78 (3500 MHz 5G)",
-                "79": "n79 (4800 MHz 5G)"
-            };
-            const bArr = bands.split(",").map(b => b.trim());
-            const formatted = bArr.map(b => bandMap[b] || `Band ${b}`).join(" + ");
-            let bwStr = "";
-            if (bw && bw.trim() !== "") {
-                const bws = bw.split(",").map(w => {
-                    const num = parseInt(w.trim());
-                    return num >= 1000 ? `${num / 1000} МГц` : `${num} кГц`;
-                }).join(" + ");
-                bwStr = ` • ${bws}`;
-            }
-            return formatted + bwStr;
-        }
-
-        function updateSignalMeter(meterFillId, rsrpVal, rsrpTextId) {
-            const fill = document.getElementById(meterFillId);
-            const txt = document.getElementById(rsrpTextId);
-            const num = parseInt(rsrpVal);
-            if (isNaN(num) || num === 0 || num === 2147483647) {
-                if (txt) { txt.textContent = "-- dBm"; txt.style.color = "var(--text-muted)"; }
-                if (fill) fill.style.width = "0%";
-                return;
-            }
-            if (txt) txt.textContent = `${num} dBm`;
-
-            let pct = Math.round(((num - (-125)) / (-65 - (-125))) * 100);
-            pct = Math.max(5, Math.min(100, pct));
-            if (fill) {
-                fill.style.width = `${pct}%`;
-                if (num >= -92) {
-                    fill.style.backgroundColor = "var(--accent-green)";
-                    if (txt) txt.style.color = "var(--accent-green)";
-                } else if (num >= -105) {
-                    fill.style.backgroundColor = "var(--accent-yellow)";
-                    if (txt) txt.style.color = "var(--accent-yellow)";
-                } else {
-                    fill.style.backgroundColor = "var(--accent-red)";
-                    if (txt) txt.style.color = "var(--accent-red)";
-                }
-            }
-        }
-
-        function updateQualityMetrics(slotIdx, radio) {
-            const p = `sim${slotIdx}-`;
-            const rsrqEl = document.getElementById(p + "rsrq");
-            const sinrEl = document.getElementById(p + "sinr");
-
-            if (radio && radio.rsrq && radio.rsrq !== "2147483647") {
-                const q = parseInt(radio.rsrq);
-                rsrqEl.textContent = `${q} dB`;
-                rsrqEl.style.color = q >= -10 ? "var(--accent-green)" : (q >= -15 ? "var(--accent-yellow)" : "var(--accent-red)");
-            } else {
-                rsrqEl.textContent = "-- dB";
-                rsrqEl.style.color = "var(--text-muted)";
-            }
-
-            if (radio && radio.sinr && radio.sinr !== "2147483647") {
-                const s = parseInt(radio.sinr);
-                sinrEl.textContent = `${s >= 0 ? '+' : ''}${s} dB`;
-                sinrEl.style.color = s >= 10 ? "var(--accent-green)" : (s >= 0 ? "var(--accent-yellow)" : "var(--accent-red)");
-            } else {
-                sinrEl.textContent = "-- dB";
-                sinrEl.style.color = "var(--text-muted)";
-            }
-        }
-
-        function toggleDetails(id, headerEl) {
-            haptic();
-            const el = document.getElementById(id);
-            if (!el) return;
-            const isOpen = el.classList.contains("open");
-            el.classList.toggle("open", !isOpen);
-            const arrow = headerEl.querySelector(".arrow");
-            if (arrow) arrow.textContent = isOpen ? "▼" : "▲";
-        }
-
-        function renderSlotRadio(slotIdx, sim) {
-            const p = `sim${slotIdx}-`;
-            const card = document.getElementById(`sim${slotIdx}-card`);
-            if (!sim || (!sim.op && !sim.plmn)) {
-                if (slotIdx === 1) card.style.display = "none";
-                return;
-            }
-            card.style.display = "block";
-
-            const titleEl = document.getElementById(p + "title");
-            const plmnEl = document.getElementById(p + "plmn");
-            const badgeEl = document.getElementById(p + "badge");
-
-            titleEl.textContent = `SIM ${slotIdx + 1}: ${sim.op || 'Оператор'}`;
-            plmnEl.textContent = `PLMN: ${sim.plmn || '--'} • Сеть: ${sim.net || 'LTE'}`;
-
-            if (sim.ims) {
-                badgeEl.className = "status-pill pill-success";
-                badgeEl.textContent = "VoLTE / VoWiFi OK";
-            } else {
-                badgeEl.className = "status-pill pill-warn";
-                badgeEl.textContent = "IMS Standby";
-            }
-
-            const r = sim.radio || {};
-            updateSignalMeter(p + "meter-fill", r.rsrp, p + "rsrp");
-            updateQualityMetrics(slotIdx, r);
-
-            // Band & CA
-            document.getElementById(p + "band").textContent = formatBand(r.bands, r.bw);
-            const caEl = document.getElementById(p + "ca");
-            if (r.ca) {
-                caEl.innerHTML = `<span class="pill-ca">⚡ 4G+ LTE-A (CA)</span>`;
-            } else {
-                caEl.textContent = "1 несущая";
-            }
-
-            // VoPS
-            const vopsEl = document.getElementById(p + "vops");
-            if (r.vops) {
-                vopsEl.innerHTML = `<span style="color:var(--accent-green); font-weight:600;">● Поддерживается (VoLTE)</span>`;
-            } else {
-                vopsEl.innerHTML = `<span style="color:var(--text-muted);">Не заявлен</span>`;
-            }
-
-            // 5G NSA
-            const nrEl = document.getElementById(p + "nr");
-            if (r.nr) {
-                nrEl.innerHTML = `<span style="color:var(--accent-green); font-weight:600;">● Обнаружена (Ready)</span>`;
-            } else {
-                nrEl.innerHTML = `<span style="color:var(--text-muted);">Не обнаружена</span>`;
-            }
-
-            // Call priority mode (WFC / Cross-SIM)
-            const wfcModeEl = document.getElementById(p + "wfcmode");
-            const wfcMode = (sim.wfcMode !== undefined) ? parseInt(sim.wfcMode) : 2;
-            if (wfcModeEl) {
-                if (wfcMode === 0) {
-                    wfcModeEl.innerHTML = `<span class="pill-ca" style="background: rgba(244, 63, 94, 0.18); color: #fb7185; border-color: rgba(244, 63, 94, 0.35);">🌐 Только Интернет (Cross-SIM)</span>`;
-                } else if (wfcMode === 1) {
-                    wfcModeEl.innerHTML = `<span style="color: var(--text-muted);">📶 Предпочитать сотовую</span>`;
-                } else {
-                    wfcModeEl.innerHTML = `<span style="color: var(--accent-blue); font-weight:600;">⚡ Авто (Wi-Fi/Интернет)</span>`;
-                }
-            }
-
-            // Engineering details
-            document.getElementById(p + "earfcn").textContent = (r.earfcn && r.earfcn !== "2147483647") ? r.earfcn : "--";
-
-            const speedEl = document.getElementById(p + "speed");
-            if (r.dlKbps && r.dlKbps > 0) {
-                const dl = (r.dlKbps / 1000).toFixed(1);
-                const ul = (r.ulKbps / 1000).toFixed(1);
-                speedEl.textContent = `DL ${dl} Мбит/с • UL ${ul} Мбит/с`;
-            } else {
-                speedEl.textContent = "--";
-            }
-
-            const taEl = document.getElementById(p + "ta");
-            if (r.ta && r.ta !== "2147483647") {
-                const taNum = parseInt(r.ta);
-                if (taNum > 0) {
-                    taEl.textContent = `TA ${taNum} (~${Math.round(taNum * 78)} м)`;
-                } else {
-                    taEl.textContent = "TA 0 (< 100 м)";
-                }
-            } else {
-                taEl.textContent = "--";
-            }
-
-            document.getElementById(p + "cqi").textContent = (r.cqi && r.cqi !== "2147483647") ? `CQI ${r.cqi}` : "--";
-            document.getElementById(p + "iface").textContent = r.iface || "rmnet_data";
-            document.getElementById(p + "pcscf").textContent = r.pcscf || "Авто / DHCPv6";
-        }
-
-        function renderState(data, isLiveRefresh) {
-            if (!data) return;
-
-            if (data.model && data.device) {
-                document.getElementById("device-subtitle").textContent = `${data.model} (${data.device}) • Shannon SER`;
-            }
-
-            if (data.temp !== undefined && data.temp !== null && data.temp > 0) {
-                const tEl = document.getElementById("soc-temp-pill");
-                if (tEl) {
-                    tEl.textContent = `🌡️ ${data.temp}°C`;
-                    if (data.temp >= 45) {
-                        tEl.style.color = "var(--accent-red)";
-                        tEl.style.borderColor = "rgba(242, 139, 130, 0.4)";
-                    } else {
-                        tEl.style.color = "#fb923c";
-                        tEl.style.borderColor = "rgba(251, 146, 60, 0.3)";
-                    }
-                }
-            }
-
-            if (data.sims && data.sims.length > 0) {
-                renderSlotRadio(0, data.sims[0]);
-                renderSlotRadio(1, data.sims[1]);
-            }
-
-            const forceBtn = document.getElementById("btn-force-cross-sim");
-            if (forceBtn && data.sims && data.sims[1]) {
-                const s2Mode = parseInt(data.sims[1].wfcMode);
-                if (s2Mode === 0) {
-                    forceBtn.textContent = "🌐 Отключить принудительный Cross-SIM (SIM 2: В сети)";
-                    forceBtn.style.background = "rgba(109, 213, 140, 0.15)";
-                    forceBtn.style.borderColor = "rgba(109, 213, 140, 0.35)";
-                    forceBtn.style.color = "var(--accent-green)";
-                } else {
-                    forceBtn.textContent = "🌐 Форсировать звонки SIM 2 через интернет (Cross-SIM)";
-                    forceBtn.style.background = "rgba(244, 63, 94, 0.12)";
-                    forceBtn.style.borderColor = "rgba(244, 63, 94, 0.35)";
-                    forceBtn.style.color = "#fb7185";
-                }
-            }
-
-            if (data.mounts) {
-                const cfgOk = data.mounts.cfg;
-                const ueOk = data.mounts.uecap;
-                if (cfgOk && ueOk) {
-                    document.getElementById("baseband-status").textContent = "cfg.db & uecap OK (SER Donor)";
-                    document.getElementById("baseband-status").style.color = "var(--accent-green)";
-                } else {
-                    document.getElementById("baseband-status").textContent = "Не смонтировано";
-                    document.getElementById("baseband-status").style.color = "var(--accent-yellow)";
-                }
-            }
-
-            if (!isLiveRefresh && data.config && data.config.slots) {
-                configData = data.config;
-                updateTogglesForSlot(currentSlot);
-            }
-        }
-
-        // Fast 0ms render from localStorage cache
-        function initInstantCache() {
-            try {
-                const cached = localStorage.getItem("netfix_cached_state");
-                if (cached) {
-                    renderState(JSON.parse(cached), false);
-                }
-            } catch (e) {}
-        }
-
-        // High-speed non-blocking background update (< 50ms)
-        let isFetchingState = false;
-        async function fetchFreshState(isLiveRefresh) {
-            if (isFetchingState) return;
-            isFetchingState = true;
-            try {
-                const res = await ksuExec("netfix json");
-                if (res.stdout) {
-                    try {
-                        const data = JSON.parse(res.stdout);
-                        if (data && data.ok) {
-                            renderState(data, isLiveRefresh);
-                            localStorage.setItem("netfix_cached_state", JSON.stringify(data));
-                        }
-                    } catch (e) {}
-                }
-            } catch (e) {
-            } finally {
-                isFetchingState = false;
-            }
-        }
-
-        function switchSlotTab(slot) {
-            haptic();
-            currentSlot = slot;
-            document.querySelectorAll(".tab").forEach((el, idx) => {
-                el.classList.toggle("active", idx === slot);
-            });
-            updateTogglesForSlot(slot);
-        }
-
-        function updateTogglesForSlot(slot) {
-            const s = configData.slots ? (configData.slots[slot] || {}) : {};
-            document.getElementById("cfg-volte").checked = s.volte !== false;
-            document.getElementById("cfg-vowifi").checked = (s.vowifi !== false && s.wfc !== false);
-            document.getElementById("cfg-fivegnr").checked = s.fiveGnr !== false;
-            document.getElementById("cfg-vt").checked = s.vt !== false;
-            document.getElementById("cfg-ut").checked = (s.ut !== false && s.ssOverUt !== false);
-            document.getElementById("cfg-rcs").checked = s.rcs !== false;
-            document.getElementById("cfg-crossSim").checked = (s.crossSim !== false && s.crossSimIms !== false);
-
-            let mode = 2;
-            if (s.wfcMode !== undefined) {
-                mode = parseInt(s.wfcMode);
-            }
-            updateWfcModeUI(mode);
-        }
-
-        function selectWfcMode(mode) {
-            haptic();
-            if (!configData.slots) configData.slots = {};
-            if (!configData.slots[currentSlot]) configData.slots[currentSlot] = {};
-
-            configData.slots[currentSlot].wfcMode = mode;
-            updateWfcModeUI(mode);
-            saveConfigDebounced();
-
-            // Fire-and-forget in background without blocking UI
-            ksuExec(`netfix mode ${currentSlot} ${mode} &`);
-
-            const modeNames = {
-                0: "🌐 Режим 'Только интернет' (Cross-SIM) активирован",
-                1: "📶 Режим 'Предпочитать сотовую сеть' включен",
-                2: "⚡ Режим 'Автовыбор (Wi-Fi)' включен"
-            };
-            ksuToast(`SIM ${currentSlot + 1}: ${modeNames[mode] || mode}`);
-        }
-
-        function updateWfcModeUI(mode) {
-            const descEl = document.getElementById("wfc-mode-desc");
-            const container = document.getElementById("wfc-mode-selector");
-            if (!container) return;
-
-            container.querySelectorAll(".seg-btn").forEach(btn => {
-                const btnMode = parseInt(btn.getAttribute("data-mode"));
-                btn.classList.toggle("active", btnMode === mode);
-            });
-
-            if (descEl) {
-                if (mode === 0) {
-                    descEl.innerHTML = `<span style="color:#fb7185; font-weight:600;">Принудительно через интернет (Cross-SIM):</span> сотовый голос отключен, звонки идут через интернет второй SIM или Wi-Fi.`;
-                } else if (mode === 1) {
-                    descEl.textContent = "Предпочитать сотовую вышку, интернет использовать только при обрыве связи.";
-                } else {
-                    descEl.textContent = "Автовыбор: предпочитать Wi-Fi / интернет при стабильном соединении (Рекомендуется).";
-                }
-            }
-        }
-
-        function forceCrossSimToggle() {
-            haptic();
-            if (!configData.slots) configData.slots = {};
-            if (!configData.slots[1]) configData.slots[1] = {};
-
-            const cur = configData.slots[1].wfcMode === 0 ? 2 : 0;
-            configData.slots[1].wfcMode = cur;
-
-            // Fire-and-forget in background
-            ksuExec(`netfix mode 1 ${cur} &`);
-            saveConfigDebounced();
-
-            if (currentSlot === 1) updateWfcModeUI(cur);
-
-            const btn = document.getElementById("btn-force-cross-sim");
-            if (cur === 0) {
-                if (btn) {
-                    btn.textContent = "🌐 Отключить принудительный Cross-SIM (SIM 2: В сети)";
-                    btn.style.background = "rgba(109, 213, 140, 0.15)";
-                    btn.style.borderColor = "rgba(109, 213, 140, 0.35)";
-                    btn.style.color = "var(--accent-green)";
-                }
-                ksuToast("SIM 2: Режим 'Только интернет' (Cross-SIM) активирован!");
-            } else {
-                if (btn) {
-                    btn.textContent = "🌐 Форсировать звонки SIM 2 через интернет (Cross-SIM)";
-                    btn.style.background = "rgba(244, 63, 94, 0.12)";
-                    btn.style.borderColor = "rgba(244, 63, 94, 0.35)";
-                    btn.style.color = "#fb7185";
-                }
-                ksuToast("SIM 2: Возвращен стандартный режим 'Автовыбор'");
-            }
-        }
-
-        function saveConfigDebounced() {
-            clearTimeout(saveDebounceTimer);
-            saveDebounceTimer = setTimeout(async () => {
-                const jsonString = JSON.stringify(configData, null, 2);
-                await ksuExec(`cat << 'EOF' > /data/adb/carrier_ims/config.json\n${jsonString}\nEOF`);
-                localStorage.setItem("netfix_cached_state", JSON.stringify({ ...JSON.parse(localStorage.getItem("netfix_cached_state") || "{}"), config: configData }));
-            }, 250);
-        }
-
-        function toggleInput(id) {
-            const el = document.getElementById(id);
-            if (el) {
-                el.checked = !el.checked;
-                onToggleChange();
-            }
-        }
-
-        function onToggleChange() {
-            haptic();
-            if (!configData.slots) configData.slots = {};
-            if (!configData.slots[currentSlot]) configData.slots[currentSlot] = {};
-
-            const s = configData.slots[currentSlot];
-            s.volte = document.getElementById("cfg-volte").checked;
-            s.vowifi = document.getElementById("cfg-vowifi").checked;
-            s.fiveGnr = document.getElementById("cfg-fivegnr").checked;
-            s.vonr = s.fiveGnr;
-            s.vt = document.getElementById("cfg-vt").checked;
-            s.ut = document.getElementById("cfg-ut").checked;
-            s.rcs = document.getElementById("cfg-rcs").checked;
-            s.crossSim = document.getElementById("cfg-crossSim").checked;
-
-            saveConfigDebounced();
-            ksuToast("Конфигурация сохранена");
-        }
-
-        async function applySettings() {
-            haptic();
-            const btn = document.getElementById("btn-reload");
-            const execCard = document.getElementById("exec-card");
-            const execTitle = document.getElementById("exec-title");
-            const execStatus = document.getElementById("exec-status");
-            const execOutput = document.getElementById("exec-output");
-
-            btn.disabled = true;
-            btn.textContent = "⏳ Выполняется инъекция...";
-            execCard.style.display = "block";
-            execTitle.textContent = "⚡ Переприменение настроек связи...";
-            execStatus.className = "status-pill pill-warn";
-            execStatus.textContent = "Выполняется";
-            execOutput.textContent = "> netfix reload\n\n[1/3] Применение persist-свойств телефонии...\n[2/3] Обновление базы SIM и точек доступа APN...\n";
-
-            const tStart = Date.now();
-            const res = await ksuExec("netfix reload 2>&1");
-            const elapsed = Date.now() - tStart;
-
-            execOutput.textContent += (res.stdout || res.stderr || "Готово.");
-            execOutput.textContent += `\n\n[✓] Успешно завершено за ${elapsed} мс!`;
-            
-            execStatus.className = "status-pill pill-success";
-            execStatus.textContent = "Успешно";
-            btn.disabled = false;
-            btn.textContent = "⚡ Переприменить настройки сейчас";
-
-            ksuToast("Настройки успешно применены!");
-            fetchFreshState();
-        }
-
-        async function provisionAPNs() {
-            haptic();
-            const execCard = document.getElementById("exec-card");
-            const execTitle = document.getElementById("exec-title");
-            const execStatus = document.getElementById("exec-status");
-            const execOutput = document.getElementById("exec-output");
-
-            execCard.style.display = "block";
-            execTitle.textContent = "🌐 Проверка и настройка точек доступа APN...";
-            execStatus.className = "status-pill pill-warn";
-            execStatus.textContent = "Выполняется";
-            execOutput.textContent = "> netfix apn\n\nСканирование базы операторов РФ...\n";
-
-            const res = await ksuExec("netfix apn 2>&1");
-            execOutput.textContent += (res.stdout || res.stderr || "");
-            execOutput.textContent += "\n[✓] Проверка APN завершена.";
-
-            execStatus.className = "status-pill pill-success";
-            execStatus.textContent = "Готово";
-            ksuToast("Точки доступа проверены и добавлены!");
-        }
-
-        function toggleLogs() {
-            haptic();
-            const card = document.getElementById("log-card");
-            if (card.style.display === "none") {
-                card.style.display = "block";
-                refreshLogs();
-            } else {
-                card.style.display = "none";
-            }
-        }
-
-        async function refreshLogs() {
-            haptic();
-            const logBox = document.getElementById("log-content");
-            logBox.textContent = "Чтение логов радиомодуля и IMS (logcat)...";
-            const res = await ksuExec("netfix log 2>&1");
-            rawLogText = res.stdout || res.stderr || "Нет логов.";
-            filterLogs();
-        }
-
-        function filterLogs() {
-            const query = (document.getElementById("log-filter").value || "").trim().toLowerCase();
-            const logBox = document.getElementById("log-content");
-            if (!query) {
-                logBox.textContent = rawLogText;
-            } else {
-                const lines = rawLogText.split("\n");
-                const matched = lines.filter(l => l.toLowerCase().includes(query));
-                logBox.textContent = matched.length > 0 ? matched.join("\n") : `По запросу "${query}" ничего не найдено.`;
-            }
-            logBox.scrollTop = logBox.scrollHeight;
-        }
-
-        function copyLogs() {
-            haptic();
-            const text = document.getElementById("log-content").textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                ksuToast("Логи скопированы!");
-            }).catch(() => {
-                ksuToast("Ошибка копирования");
-            });
-        }
-
-        // Auto-refresh lifecycle (every 5s only when visible; 0% CPU when backgrounded/screen locked)
-        let livePollingTimer = null;
-        const LIVE_INTERVAL = 5000;
-
-        function startLiveTimer() {
-            if (livePollingTimer) clearInterval(livePollingTimer);
-            livePollingTimer = setInterval(() => {
-                if (document.visibilityState === "visible") {
-                    fetchFreshState(true);
-                }
-            }, LIVE_INTERVAL);
-            setLiveBadge(true);
-        }
-
-        function stopLiveTimer() {
-            if (livePollingTimer) {
-                clearInterval(livePollingTimer);
-                livePollingTimer = null;
-            }
-            setLiveBadge(false);
-        }
-
-        function setLiveBadge(isActive) {
-            const dot = document.getElementById("live-dot");
-            const txt = document.getElementById("live-text");
-            if (dot && txt) {
-                if (isActive) {
-                    dot.className = "live-dot";
-                    txt.textContent = "Live 5s";
-                } else {
-                    dot.className = "live-dot paused";
-                    txt.textContent = "Пауза";
-                }
-            }
-        }
-
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-                fetchFreshState(true);
-                startLiveTimer();
-            } else {
-                stopLiveTimer();
-            }
+      } catch (err) {
+        console.error("Fetch error", err);
+      } finally {
+        isFetching = false;
+      }
+    }
+
+    function updateHistory(data) {
+      if (!data.sims) return;
+      data.sims.forEach(sim => {
+        const slot = sim.slot;
+        if (!chartHistory[slot]) chartHistory[slot] = { rsrp: [], sinr: [] };
+        const r = sim.radio.rsrp || -140;
+        const s = sim.radio.sinr || 0;
+
+        chartHistory[slot].rsrp.push(r);
+        if (chartHistory[slot].rsrp.length > MAX_POINTS) chartHistory[slot].rsrp.shift();
+
+        chartHistory[slot].sinr.push(s);
+        if (chartHistory[slot].sinr.length > MAX_POINTS) chartHistory[slot].sinr.shift();
+      });
+    }
+
+    function renderGlobalData(data) {
+      document.getElementById('deviceSub').innerText = 
+        `${data.model} (${data.device}) • Android ${data.android} • Tensor G3`;
+      document.getElementById('badgeAndroid').innerText = `Android ${data.android}`;
+      document.getElementById('badgeTemp').innerText = `🌡️ ${data.temp}°C`;
+
+      // Mounts
+      const m = data.mounts;
+      document.getElementById('valCfg').innerHTML = m.cfg 
+        ? `<span class="status-ok">●</span> Смонтирован (SER #${m.cfg_inode || ''})`
+        : `<span class="status-err">✕</span> Не смонтирован`;
+
+      document.getElementById('valUecap').innerHTML = m.uecap 
+        ? `<span class="status-ok">●</span> Смонтирован (Wildcard #${m.uecap_inode || ''})`
+        : `<span class="status-err">✕</span> Не смонтирован`;
+
+      document.getElementById('valStealth').innerHTML = m.stealth 
+        ? `<span class="status-ok">●</span> Защищен (Mir Pay Safe)`
+        : `<span class="status-warn">▲</span> Замечены пути root`;
+
+      // Tab names
+      if (data.sims[0]) document.getElementById('tabSim0Name').innerText = data.sims[0].op || "MegaFon";
+      if (data.sims[1]) document.getElementById('tabSim1Name').innerText = data.sims[1].op || "beeline";
+    }
+
+    function renderSimData(data) {
+      const sim = data.sims.find(s => s.slot === currentSim) || data.sims[0];
+      if (!sim) return;
+
+      const r = sim.radio;
+
+      // Primary Metric Cards
+      const rsrp = r.rsrp || -140;
+      const sinr = r.sinr || 0;
+      const rsrq = r.rsrq || 0;
+      const cqi = r.cqi || 0;
+
+      // RSRP gauge & bar
+      document.getElementById('valRsrp').innerHTML = `${rsrp} <span class="metric-unit">dBm</span>`;
+      let rsrpPct = Math.min(100, Math.max(0, ((rsrp + 140) / 100) * 100));
+      let rsrpColor = "var(--accent-rose)";
+      let rsrpQual = "Слабый сигнал";
+
+      if (rsrp >= -85) {
+        rsrpColor = "var(--accent-emerald)";
+        rsrpQual = "Отличный приём (> -85 dBm)";
+      } else if (rsrp >= -95) {
+        rsrpColor = "var(--accent-blue)";
+        rsrpQual = "Хороший приём (-85..-95 dBm)";
+      } else if (rsrp >= -105) {
+        rsrpColor = "var(--accent-amber)";
+        rsrpQual = "Удовлетворительный (-95..-105 dBm)";
+      }
+      document.getElementById('valRsrp').style.color = rsrpColor;
+      document.getElementById('barRsrp').style.width = `${rsrpPct}%`;
+      document.getElementById('barRsrp').style.background = rsrpColor;
+      document.getElementById('qualRsrp').innerText = rsrpQual;
+
+      // SINR gauge & bar
+      document.getElementById('valSinr').innerHTML = `${sinr >= 0 ? '+' : ''}${sinr} <span class="metric-unit">dB</span>`;
+      let sinrPct = Math.min(100, Math.max(0, ((sinr + 10) / 40) * 100));
+      document.getElementById('barSinr').style.width = `${sinrPct}%`;
+      document.getElementById('qualSinr').innerText = sinr >= 10 ? "Высокое качество, без помех" : (sinr >= 0 ? "Нормальное качество" : "Высокие радиопомехи");
+
+      // RSRQ
+      document.getElementById('valRsrq').innerHTML = `${rsrq} <span class="metric-unit">dB</span>`;
+      let rsrqPct = Math.min(100, Math.max(0, ((rsrq + 20) / 17) * 100));
+      document.getElementById('barRsrq').style.width = `${rsrqPct}%`;
+
+      // CQI
+      document.getElementById('valCqi').innerHTML = `${cqi} <span class="metric-unit">/ 15</span>`;
+      document.getElementById('barCqi').style.width = `${(cqi / 15) * 100}%`;
+      let cqiDesc = "QPSK";
+      if (cqi >= 10) cqiDesc = "256-QAM (Макс. скорость)";
+      else if (cqi >= 7) cqiDesc = "64-QAM (Высокая скорость)";
+      else if (cqi >= 4) cqiDesc = "16-QAM";
+      document.getElementById('qualCqi').innerText = `Модуляция: ${cqiDesc}`;
+
+      // Table Details
+      document.getElementById('tblOp').innerText = `${sim.op || 'SIM ' + sim.slot} (${sim.plmn || '--'})`;
+      document.getElementById('tblRat').innerText = (r.ca ? "LTE-Advanced (CA)" : (sim.net || "LTE"));
+
+      const bandInfo = getBandDetails(r.bands || "3", r.earfcn);
+      document.getElementById('tblBand').innerText = bandInfo.name;
+      document.getElementById('tblFreq').innerText = `${r.earfcn || '--'} (${bandInfo.freq})`;
+
+      const dist = r.ta_meters > 0 ? `~${r.ta_meters} метров` : "Вблизи БС (< 100 м)";
+      document.getElementById('tblTa').innerText = `TA = ${r.ta || '0'} (${dist})`;
+
+      document.getElementById('tblVops').innerText = r.vops ? "Поддерживается (VoLTE готов)" : "Не поддерживается";
+      document.getElementById('tblIms').innerText = sim.ims ? "VoLTE & VoWiFi Registered" : "Не зарегистрирован";
+      document.getElementById('tblIface').innerText = r.iface || "rmnet_data0";
+
+      // Carrier Aggregation Details
+      const bwArr = (r.bw || "").split(',').map(s => parseInt(s.trim()) / 1000).filter(n => !isNaN(n) && n > 0);
+      let totalBw = bwArr.reduce((a, b) => a + b, 0);
+      if (totalBw === 0) totalBw = 10;
+
+      document.getElementById('tblBw').innerText = `${bwArr[0] || 10} MHz`;
+
+      const caBanner = document.getElementById('caBanner');
+      const caTitleText = document.getElementById('caTitleText');
+      const caBadge = document.getElementById('caBadge');
+      const caTotalBw = document.getElementById('caTotalBw');
+      const caBlocks = document.getElementById('caBlocks');
+
+      if (r.ca && bwArr.length > 1) {
+        caTitleText.innerText = `Агрегация частот: ${bwArr.length}CA АКТИВНА`;
+        caBadge.innerText = `${bwArr.length}CA`;
+        caBadge.style.background = "rgba(168, 85, 247, 0.3)";
+        caTotalBw.innerText = `${totalBw} MHz (Суммарная полоса)`;
+
+        let html = '';
+        bwArr.forEach((w, idx) => {
+          if (idx === 0) {
+            html += `<div class="ca-block pcc"><strong>PCC:</strong> ${bandInfo.name.split(' ')[0]} • <strong>${w} MHz</strong></div>`;
+          } else {
+            html += `<div class="ca-block"><strong>SCC ${idx}:</strong> <strong>${w} MHz</strong></div>`;
+          }
         });
+        caBlocks.innerHTML = html;
+      } else {
+        caTitleText.innerText = `Одиночная несущая (1CA)`;
+        caBadge.innerText = "STANDBY";
+        caBadge.style.background = "rgba(255, 255, 255, 0.1)";
+        caTotalBw.innerText = `${bwArr[0] || 10} MHz (Агрегация в режиме ожидания трафика)`;
+        caBlocks.innerHTML = `<div class="ca-block pcc"><strong>PCC:</strong> ${bandInfo.name.split(' ')[0]} • <strong>${bwArr[0] || 10} MHz</strong></div>`;
+      }
 
-        // Initialize immediately
-        initInstantCache();
-        async function testHaptic() {
-            haptic();
-            await ksuExec("netfix haptic");
-            ksuToast("Виброотклик сработал!");
-        }
-
-        window.addEventListener("DOMContentLoaded", () => {
-            fetchFreshState(false);
-            startLiveTimer();
+      // Neighbor Cells
+      const nList = document.getElementById('neighborList');
+      const nBadge = document.getElementById('badgeNeighCount');
+      if (r.neighbors && r.neighbors.length > 0) {
+        nBadge.innerText = `${r.neighbors.length} вышек рядом`;
+        let nHtml = '';
+        r.neighbors.forEach((cell, idx) => {
+          nHtml += `
+            <div class="neighbor-item">
+              <div class="neighbor-id"><span>📡 БС #${idx + 1}</span></div>
+              <div class="neighbor-metrics">
+                <span style="color: ${cell.rsrp >= -95 ? 'var(--accent-emerald)' : 'var(--text-muted)'};">RSRP: ${cell.rsrp} dBm</span>
+                <span style="color: var(--accent-cyan);">SINR: ${cell.sinr >= 0 ? '+' : ''}${cell.sinr} dB</span>
+              </div>
+            </div>
+          `;
         });
-    </script>
+        nList.innerHTML = nHtml;
+      } else {
+        nBadge.innerText = "0 обнаружено";
+        nList.innerHTML = `<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px;">Соседние соты не передают сигнатурные отчеты в текущем цикле</div>`;
+      }
+    }
+
+    function drawCharts() {
+      drawCanvasChart('rsrpChart', chartHistory[currentSim].rsrp, -130, -60, 'dBm', '#10b981', 'chartStatsRsrp');
+      drawCanvasChart('sinrChart', chartHistory[currentSim].sinr, -15, 30, 'dB', '#06b6d4', 'chartStatsSinr');
+    }
+
+    function drawCanvasChart(canvasId, data, minVal, maxVal, unit, strokeColor, statsElemId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      if (!data || data.length < 2) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Сбор точек радиосигнала...', w / 2, h / 2);
+        return;
+      }
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 3; i++) {
+        let y = (h / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      const points = [];
+      const step = w / (MAX_POINTS - 1);
+      const startOffset = w - (data.length - 1) * step;
+
+      let minObserved = 999;
+      let maxObserved = -999;
+      let sumObserved = 0;
+
+      data.forEach((val, idx) => {
+        if (val < minObserved) minObserved = val;
+        if (val > maxObserved) maxObserved = val;
+        sumObserved += val;
+
+        const clamped = Math.max(minVal, Math.min(maxVal, val));
+        const y = h - ((clamped - minVal) / (maxVal - minVal)) * (h - 20) - 10;
+        const x = startOffset + idx * step;
+        points.push({ x, y });
+      });
+
+      const avg = Math.round(sumObserved / data.length);
+      const current = data[data.length - 1];
+
+      if (statsElemId) {
+        document.getElementById(statsElemId).innerText = 
+          `Текущий: ${current} ${unit} | Мин: ${minObserved} | Макс: ${maxObserved} | Ср: ${avg}`;
+      }
+
+      // Fill gradient under curve
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, h);
+      points.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(points[points.length - 1].x, h);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, strokeColor + '44');
+      grad.addColorStop(1, strokeColor + '00');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Stroke line
+      ctx.beginPath();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      points.forEach((p, idx) => {
+        if (idx === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+
+      // Draw pulse dot on last point
+      const lastP = points[points.length - 1];
+      ctx.beginPath();
+      ctx.arc(lastP.x, lastP.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function manualRefresh() {
+      fetchTelemetry();
+    }
+
+    // Auto-refresh loop
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchTelemetry();
+      autoRefreshTimer = setInterval(fetchTelemetry, 1500);
+    });
+  </script>
 </body>
 </html>
