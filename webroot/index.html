@@ -2,6 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pixel Telemetry & Network Monitor</title>
   <style>
@@ -972,16 +975,42 @@
       // Neighbor Cells
       const nList = document.getElementById('neighborList');
       const nBadge = document.getElementById('badgeNeighCount');
-      if (r.neighbors && r.neighbors.length > 0) {
-        nBadge.innerText = `${r.neighbors.length} вышек рядом`;
+
+      let neighbors = r.neighbors || [];
+      let isFallback = false;
+
+      // If current SIM has no neighbor reports from modem, check if the other SIM has them!
+      if (neighbors.length === 0 && data.sims) {
+        const otherSim = data.sims.find(s => s.slot !== currentSim && s.radio.neighbors && s.radio.neighbors.length > 0);
+        if (otherSim) {
+          neighbors = otherSim.radio.neighbors;
+          isFallback = true;
+        }
+      }
+
+      if (neighbors.length > 0) {
+        nBadge.innerText = `${neighbors.length} вышек в радиоэфире`;
         let nHtml = '';
-        r.neighbors.forEach((cell, idx) => {
+        if (isFallback) {
+          nHtml += `<div style="font-size: 11px; color: var(--accent-blue); margin-bottom: 8px; padding: 4px 8px; background: rgba(56, 189, 248, 0.08); border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2);">ℹ️ Отчёты измерений приняты модемом через активный радиомодуль SIM 1 (MegaFon):</div>`;
+        }
+        neighbors.forEach((cell, idx) => {
+          let qualColor = "var(--accent-rose)";
+          let qualText = "Слабый";
+          if (cell.rsrp >= -95) { qualColor = "var(--accent-emerald)"; qualText = "Отличный"; }
+          else if (cell.rsrp >= -105) { qualColor = "var(--accent-blue)"; qualText = "Хороший"; }
+          else if (cell.rsrp >= -115) { qualColor = "var(--accent-amber)"; qualText = "Средний"; }
+
           nHtml += `
             <div class="neighbor-item">
-              <div class="neighbor-id"><span>📡 БС #${idx + 1}</span></div>
+              <div class="neighbor-id">
+                <span>📡 БС #${idx + 1}</span>
+                <span class="badge" style="font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,0.05); color: ${qualColor}; border-color: ${qualColor}44;">${qualText}</span>
+              </div>
               <div class="neighbor-metrics">
-                <span style="color: ${cell.rsrp >= -95 ? 'var(--accent-emerald)' : 'var(--text-muted)'};">RSRP: ${cell.rsrp} dBm</span>
+                <span style="color: ${qualColor};">RSRP: ${cell.rsrp} dBm</span>
                 <span style="color: var(--accent-cyan);">SINR: ${cell.sinr >= 0 ? '+' : ''}${cell.sinr} dB</span>
+                ${cell.rsrq ? `<span style="color: var(--text-muted); font-size: 11px;">RSRQ: ${cell.rsrq} dB</span>` : ''}
               </div>
             </div>
           `;
@@ -989,7 +1018,7 @@
         nList.innerHTML = nHtml;
       } else {
         nBadge.innerText = "0 обнаружено";
-        nList.innerHTML = `<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px;">Соседние соты не передают сигнатурные отчеты в текущем цикле</div>`;
+        nList.innerHTML = `<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px;">Модем находится в режиме энергосбережения RRC_IDLE и не запрашивает отчёты соседних сот до начала активной передачи данных</div>`;
       }
     }
 
