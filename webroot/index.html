@@ -654,20 +654,74 @@
 
     function execCommand(cmd) {
       return new Promise((resolve) => {
-        try {
-          if (window.ksu && typeof window.ksu.exec === 'function') {
-            resolve(window.ksu.exec(cmd));
+        if (typeof window.ksu === "undefined" || !window.ksu.exec) {
+          if (typeof window.ksuExec === "function") {
+            try {
+              const res = window.ksuExec(cmd);
+              if (res && typeof res.then === "function") {
+                res.then(out => resolve(typeof out === "object" ? (out.stdout || JSON.stringify(out)) : out));
+              } else {
+                resolve(res);
+              }
+            } catch (e) {
+              resolve(null);
+            }
             return;
           }
-          if (typeof window.ksuExec === 'function') {
-            resolve(window.ksuExec(cmd));
-            return;
+          resolve(null);
+          return;
+        }
+
+        const cbName = "ksu_cb_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+        let resolved = false;
+
+        window[cbName] = (errno, stdout, stderr) => {
+          if (resolved) return;
+          resolved = true;
+          delete window[cbName];
+          resolve(stdout || "");
+        };
+
+        try {
+          // KernelSU / KernelSU Next standard WebUI 3-arg callback interface
+          const ret = window.ksu.exec(cmd, "{}", cbName);
+          if (typeof ret === "string") {
+            resolved = true;
+            delete window[cbName];
+            resolve(ret);
+          } else if (ret && typeof ret.then === "function") {
+            ret.then(out => {
+              if (resolved) return;
+              resolved = true;
+              delete window[cbName];
+              resolve(typeof out === "object" ? (out.stdout || JSON.stringify(out)) : out);
+            });
           }
         } catch (e) {
-          console.error("ksu error", e);
+          try {
+            // Fallback for single-arg signature
+            const ret2 = window.ksu.exec(cmd);
+            if (typeof ret2 === "string") {
+              resolved = true;
+              delete window[cbName];
+              resolve(ret2);
+            } else if (ret2 && typeof ret2.then === "function") {
+              ret2.then(out => {
+                if (resolved) return;
+                resolved = true;
+                delete window[cbName];
+                resolve(typeof out === "object" ? (out.stdout || JSON.stringify(out)) : out);
+              });
+            }
+          } catch (e2) {
+            if (!resolved) {
+              resolved = true;
+              delete window[cbName];
+              console.error("ksu exec error", e, e2);
+              resolve(null);
+            }
+          }
         }
-        // Fallback for mock preview
-        resolve(null);
       });
     }
 
@@ -745,7 +799,13 @@
         const raw = await execCommand("netfix json");
         if (raw) {
           try {
-            const data = JSON.parse(raw);
+            let jsonStr = (typeof raw === "string" ? raw : JSON.stringify(raw)).trim();
+            const startIdx = jsonStr.indexOf('{');
+            const endIdx = jsonStr.lastIndexOf('}');
+            if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+              jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+            }
+            const data = JSON.parse(jsonStr);
             if (data && data.ok) {
               latestData = data;
               updateHistory(data);
