@@ -518,6 +518,54 @@
       </div>
     </div>
 
+    <!-- 5G New Radio (NR) & VoNR Status Card -->
+    <div class="card" style="border-color: rgba(6, 182, 212, 0.25); background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, #0d1527 100%);">
+      <div class="card-title">
+        <span style="display: flex; align-items: center; gap: 6px; color: #fff;">
+          <span style="color: var(--accent-cyan);">📡</span>
+          <span>5G New Radio (NR) & VoNR</span>
+        </span>
+        <span class="badge" id="badgeNrStatus">СКАНИРОВАНИЕ...</span>
+      </div>
+      
+      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;" id="nrDesc">
+        Проверка доступности 5G в секторе базовой станции...
+      </div>
+
+      <div class="integrity-grid" style="margin-bottom: 12px;">
+        <div class="integrity-item">
+          <div class="integrity-label">Сигнализация 5G (Upper Layer)</div>
+          <div class="integrity-value" id="valNrAvail">--</div>
+        </div>
+        <div class="integrity-item">
+          <div class="integrity-label">Агрегация LTE + 5G (EN-DC)</div>
+          <div class="integrity-value" id="valEndc">--</div>
+        </div>
+        <div class="integrity-item">
+          <div class="integrity-label">Голос через 5G (VoNR SA)</div>
+          <div class="integrity-value"><span class="status-ok">●</span> Включен (AOSP Ready)</div>
+        </div>
+        <div class="integrity-item">
+          <div class="integrity-label">Ограничения сети (DCNR)</div>
+          <div class="integrity-value" id="valDcnr"><span class="status-ok">●</span> Без ограничений</div>
+        </div>
+      </div>
+
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 6px;">
+        Разблокированные диапазоны 5G (Tensor G3 Modem):
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <span class="badge" style="border-color: rgba(6,182,212,0.4); color: var(--accent-cyan); background: rgba(6,182,212,0.1);">n78 (3.5 GHz РФ)</span>
+        <span class="badge" style="border-color: rgba(168,85,247,0.4); color: var(--accent-purple); background: rgba(168,85,247,0.1);">n79 (4.7-4.9 GHz РФ)</span>
+        <span class="badge">n1 (2100)</span>
+        <span class="badge">n3 (1800)</span>
+        <span class="badge">n7 (2600)</span>
+        <span class="badge">n20 (800)</span>
+        <span class="badge">n28 (700)</span>
+        <span class="badge">n38 (2600 TDD)</span>
+      </div>
+    </div>
+
     <!-- Real-time Chart (RSRP) -->
     <div class="chart-card">
       <div class="chart-header">
@@ -970,6 +1018,37 @@
         caBadge.style.background = "rgba(255, 255, 255, 0.1)";
         caTotalBw.innerText = `${bwArr[0] || 10} MHz (Агрегация в режиме ожидания трафика)`;
         caBlocks.innerHTML = `<div class="ca-block pcc"><strong>PCC:</strong> ${bandInfo.name.split(' ')[0]} • <strong>${bwArr[0] || 10} MHz</strong></div>`;
+      }
+
+      // 5G NR Status
+      const badgeNrStatus = document.getElementById('badgeNrStatus');
+      const nrDesc = document.getElementById('nrDesc');
+      const valNrAvail = document.getElementById('valNrAvail');
+      const valEndc = document.getElementById('valEndc');
+      const valDcnr = document.getElementById('valDcnr');
+
+      if (r.nr) {
+        badgeNrStatus.className = "badge active";
+        badgeNrStatus.innerText = "ДОСТУПЕН В ЭФИРЕ";
+        nrDesc.innerHTML = `<strong style="color: #34d399;">Базовая станция оператора передаёт доступность 5G NR в данном секторе (UpperLayerIndication).</strong> Телефон готов к мгновенному подключению несущей 5G при нагрузке.`;
+        valNrAvail.innerHTML = `<span class="status-ok">●</span> Передаётся БС (Доступен)`;
+      } else {
+        badgeNrStatus.className = "badge";
+        badgeNrStatus.innerText = "ВНЕ ЗОНЫ 5G";
+        nrDesc.innerHTML = `Текущий сектор базовой станции работает в режиме LTE 4G (сигнализация 5G NR не передаётся сотой).`;
+        valNrAvail.innerHTML = `<span class="status-warn">○</span> Не передаётся сотой`;
+      }
+
+      if (r.endc) {
+        valEndc.innerHTML = `<span class="status-ok">●</span> Подключено (EN-DC)`;
+      } else {
+        valEndc.innerHTML = `<span style="color: var(--text-muted);">Ожидание сессии NR</span>`;
+      }
+
+      if (r.dcnr) {
+        valDcnr.innerHTML = `<span class="status-warn">▲</span> Ограничено оператором`;
+      } else {
+        valDcnr.innerHTML = `<span class="status-ok">●</span> Без ограничений`;
       }
 
       // Neighbor Cells

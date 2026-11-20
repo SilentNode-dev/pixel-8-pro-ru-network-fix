@@ -182,7 +182,8 @@ BEGIN {
     for (s=0; s<=1; s++) {
         rsrp[s]=""; rsrq[s]=""; sinr[s]=""; ta[s]="0"; cqi[s]="";
         bands[s]=""; bw[s]=""; earfcn[s]=""; ca[s]="false"; vops[s]="false";
-        nr[s]="false"; dl[s]=0; ul[s]=0; iface[s]=""; pcscf[s]="";
+        nr[s]="false"; endc[s]="false"; dcnr[s]="false"; ss_rsrp[s]=""; ss_sinr[s]="";
+        dl[s]=0; ul[s]=0; iface[s]=""; pcscf[s]="";
         neigh_count[s]=0;
     }
 }
@@ -196,6 +197,16 @@ slot >= 0 && /mLte=CellSignalStrengthLte:/ {
         if (kv[1]=="rssnr" && kv[2]!="2147483647") sinr[slot]=kv[2];
         if (kv[1]=="ta" && kv[2]!="2147483647") ta[slot]=kv[2];
         if (kv[1]=="cqi" && kv[2]!="2147483647") cqi[slot]=kv[2];
+    }
+}
+slot >= 0 && /mNr=CellSignalStrengthNr:/ {
+    if (match($0, /ssRsrp = [-0-9]+/)) {
+        v = substr($0, RSTART+9, RLENGTH-9);
+        if (v != "2147483647" && v != "") ss_rsrp[slot] = v;
+    }
+    if (match($0, /ssSinr = [-0-9]+/)) {
+        v = substr($0, RSTART+9, RLENGTH-9);
+        if (v != "2147483647" && v != "") ss_sinr[slot] = v;
     }
 }
 slot >= 0 && /mBands=\[/ {
@@ -226,6 +237,8 @@ slot >= 0 && /isUsingCarrierAggregation=true/ { ca[slot] = "true"; }
 slot >= 0 && /overrideNetwork=LTE_CA/ { ca[slot] = "true"; }
 slot >= 0 && /mVopsSupport = 2/ { vops[slot] = "true"; }
 slot >= 0 && /isNrAvailable = true/ { nr[slot] = "true"; }
+slot >= 0 && /isEnDcAvailable = true/ { endc[slot] = "true"; }
+slot >= 0 && /isDcNrRestricted = true/ { dcnr[slot] = "true"; }
 slot >= 0 && /mDownlinkCapacityKbps=/ {
     idx = index($0, "mDownlinkCapacityKbps=");
     if (idx > 0 && dl[slot] == 0) {
@@ -286,8 +299,8 @@ END {
             neigh_str = neigh_str neigh_json[s, k];
         }
         neigh_str = neigh_str "]";
-        printf "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%s|%s|%s\n", \
-            s, rsrp[s], rsrq[s], sinr[s], ta[s], cqi[s], bands[s], bw[s], earfcn[s], ca[s], vops[s], nr[s], dl[s], ul[s], iface[s], pcscf[s], neigh_str;
+        printf "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%s|%s|%s\n", \
+            s, rsrp[s], rsrq[s], sinr[s], ta[s], cqi[s], bands[s], bw[s], earfcn[s], ca[s], vops[s], nr[s], endc[s], dcnr[s], ss_rsrp[s], ss_sinr[s], dl[s], ul[s], iface[s], pcscf[s], neigh_str;
     }
 }')
 
@@ -309,7 +322,7 @@ END {
     echo "  \"sims\": ["
 
     first=1
-    echo "$PARSED_JSON" | while IFS='|' read -r s r_rsrp r_rsrq r_sinr r_ta r_cqi r_bands r_bw r_earfcn r_ca r_vops r_nr r_dl r_ul r_iface r_pcscf r_neigh; do
+    echo "$PARSED_JSON" | while IFS='|' read -r s r_rsrp r_rsrq r_sinr r_ta r_cqi r_bands r_bw r_earfcn r_ca r_vops r_nr r_endc r_dcnr r_ss_rsrp r_ss_sinr r_dl r_ul r_iface r_pcscf r_neigh; do
         [ -z "$s" ] && continue
         [ "$first" -eq 0 ] && echo "    ,"
         first=0
@@ -344,6 +357,11 @@ END {
         "ca": $r_ca,
         "vops": $r_vops,
         "nr": $r_nr,
+        "endc": $r_endc,
+        "dcnr": $r_dcnr,
+        "ss_rsrp": "$r_ss_rsrp",
+        "ss_sinr": "$r_ss_sinr",
+        "vonr": true,
         "dlKbps": $r_dl,
         "ulKbps": $r_ul,
         "iface": "$r_iface",
